@@ -8,43 +8,77 @@
   <meta name="theme-color" content="#007aff">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
+    /* ========== カラーテーマ変数 (ライト/ダーク自動切替) ========== */
+    :root {
+      --bg-color: #f2f2f7;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #cccccc;
+      --input-bg: #ffffff;
+      --input-text: #000000;
+      --result-bg: #e5f0ff;
+      --result-text: #004080;
+      --map-bg: #ffffff;
+      --map-grid: #e0e0e0;
+      --map-text: #888888;
+      --list-border: #eeeeee;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #000000;
+        --card-bg: #1c1c1e;
+        --text-color: #f5f5f5;
+        --border-color: #444444;
+        --input-bg: #2c2c2e;
+        --input-text: #ffffff;
+        --result-bg: #0a244d;
+        --result-text: #66a3ff;
+        --map-bg: #111111;
+        --map-grid: #333333;
+        --map-text: #aaaaaa;
+        --list-border: #333333;
+      }
+    }
+
     /* 全体のデザイン設定 */
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; }
     header { background-color: #007aff; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
     .container { padding: 15px; }
-    select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-    .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
-    .card h3 { margin-top: 0; font-size: 16px; color: #333; margin-bottom: 10px; }
+    
+    select, input { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); }
+    select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
+    
+    .card { background: var(--card-bg); padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; }
+    .card h3 { margin-top: 0; font-size: 16px; color: var(--text-color); margin-bottom: 10px; }
     
     .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-    /* inputをtextに変更し、キーボードを数字に限定 */
-    .input-group input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+    .input-group input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border-radius: 5px; }
     
     .route-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-    .route-row input { flex: 1; min-width: 0; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    .route-row input { flex: 1; min-width: 0; padding: 12px; font-size: 16px; border-radius: 5px; box-sizing: border-box; }
     .route-row button { width: auto; padding: 12px 15px; background-color: #ff3b30; margin-bottom: 0; border-radius: 5px; }
     
     button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-sizing: border-box; }
     button:active { background-color: #005bb5; }
     button.btn-green { background-color: #34c759; }
     button.btn-red { background-color: #ff3b30; }
+    button.btn-gray { background-color: #8e8e93; padding: 10px; font-size: 14px; margin-top: 10px; margin-bottom: 0;}
     
-    .result { background: #e5f0ff; padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: #004080; }
+    .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); }
     .hidden { display: none; }
 
-    /* クイックセーブ（結果画面からの登録）用 */
     .quick-save { display: flex; gap: 10px; margin-top: 15px; align-items: center; justify-content: center; }
-    .quick-save input { padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; width: 60%; font-family: sans-serif; }
+    .quick-save input { padding: 10px; border-radius: 5px; font-size: 16px; width: 60%; font-family: sans-serif; }
     .quick-save button { width: 35%; margin: 0; padding: 10px; background-color: #34c759; font-size: 14px; }
 
-    /* リスト表示用 */
-    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--list-border); }
     .list-item:last-child { border-bottom: none; }
     .list-item div { font-size: 14px; }
     .list-item button { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
 
     /* マップ用 */
-    canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: #fff; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; }
+    .map-container { position: relative; width: 100%; }
+    canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; /* デフォルトのスクロールを無効化 */ }
   </style>
 </head>
 <body>
@@ -99,7 +133,7 @@
 
   <div id="func4" class="view hidden">
     <div class="card">
-      <p style="font-size:14px; color:#666; margin-top:0;">未知の現在地から、既知の2点へ方位角を測定し、現在地を求めます。</p>
+      <p style="font-size:14px; color:var(--text-color); margin-top:0; opacity: 0.8;">未知の現在地から、既知の2点へ方位角を測定し、現在地を求めます。</p>
       <h3>既知点-A</h3>
       <div class="input-group"><input type="text" inputmode="numeric" id="f4_p1x" placeholder="E座標"><input type="text" inputmode="numeric" id="f4_p1y" placeholder="N座標"><input type="number" id="f4_az1" placeholder="Aへの測定方位角 (mil)"></div>
     </div>
@@ -144,9 +178,13 @@
   <div id="func7" class="view hidden">
     <div class="card">
       <h3>マップ (1km方眼)</h3>
-      <canvas id="mapCanvas" width="400" height="400"></canvas>
+      <p style="font-size:12px; margin-top:0; opacity:0.7;">※1本指で移動、2本指で拡大縮小</p>
+      <div class="map-container">
+        <canvas id="mapCanvas" width="400" height="400"></canvas>
+      </div>
+      <button class="btn-gray" onclick="resetMapView()">視点をリセット</button>
       
-      <h3>登録座標から諸元計算</h3>
+      <h3 style="margin-top: 20px;">登録座標から諸元計算</h3>
       <div class="input-group">
         <select id="map_start"></select>
         <select id="map_end"></select>
@@ -165,7 +203,6 @@
   const MILS_CIRCLE = 6400.0;
   let savedPoints = JSON.parse(localStorage.getItem('mgrsPoints') || '[]');
 
-  // ★修正ポイント: 入力文字列を「左詰め（右を0埋め）」で5桁にしてから数値化する
   const parseCoord = (val) => {
     if (val === "" || val === null || val === undefined) return null;
     let s = String(val).trim().substring(0, 5).padEnd(5, '0');
@@ -184,7 +221,7 @@
     let selected = document.getElementById('menu').value;
     document.getElementById(selected).classList.remove('hidden');
     if (selected === 'func6') updateSavedList();
-    if (selected === 'func7') { updateMapDropdowns(); drawMap(); }
+    if (selected === 'func7') { updateMapDropdowns(); drawMap(null, null, true); }
   }
 
   function calcData(sx, sy, ex, ey) {
@@ -198,7 +235,6 @@
     return { mil: mil, dist: dist };
   }
 
-  // クイックセーブ機能 (結果画面から直接登録)
   function getSaveUI(inputId, x, y) {
     return `<div class="quick-save">
               <input type="text" id="${inputId}" placeholder="この座標の名称">
@@ -216,110 +252,72 @@
     updateSavedList(); updateMapDropdowns();
   }
 
-  // 1. 座標対座標
+  // --- 計算ロジック (変更なし) ---
   function calcF1() {
     let sx = parseCoord(document.getElementById('f1_sx').value);
     let sy = parseCoord(document.getElementById('f1_sy').value);
     let ex = parseCoord(document.getElementById('f1_ex').value);
     let ey = parseCoord(document.getElementById('f1_ey').value);
     if(sx===null || sy===null || ex===null || ey===null) return;
-    
     let r = calcData(sx, sy, ex, ey);
     let res = document.getElementById('res1');
     res.innerHTML = `方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m`;
     res.classList.remove('hidden');
   }
 
-  // 2. 極座標
   function calcF2() {
-    let x = parseCoord(document.getElementById('f2_x').value);
-    let y = parseCoord(document.getElementById('f2_y').value);
-    let az = Number(document.getElementById('f2_az').value);
-    let dist = Number(document.getElementById('f2_dist').value);
+    let x = parseCoord(document.getElementById('f2_x').value); let y = parseCoord(document.getElementById('f2_y').value);
+    let az = Number(document.getElementById('f2_az').value); let dist = Number(document.getElementById('f2_dist').value);
     if(x===null || y===null) return;
-
     let rad = az * (2 * Math.PI / MILS_CIRCLE);
-    let targetX = x + dist * Math.sin(rad);
-    let targetY = y + dist * Math.cos(rad);
-    
+    let targetX = x + dist * Math.sin(rad); let targetY = y + dist * Math.cos(rad);
     let res = document.getElementById('res2');
     res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}` + getSaveUI('qname_f2', targetX, targetY);
     res.classList.remove('hidden');
   }
 
-  // 3. 前方交会法
   function calcF3() {
-    let p1x = parseCoord(document.getElementById('f3_p1x').value);
-    let p1y = parseCoord(document.getElementById('f3_p1y').value);
-    let az1 = Number(document.getElementById('f3_az1').value);
-    let p2x = parseCoord(document.getElementById('f3_p2x').value);
-    let p2y = parseCoord(document.getElementById('f3_p2y').value);
-    let az2 = Number(document.getElementById('f3_az2').value);
+    let p1x = parseCoord(document.getElementById('f3_p1x').value); let p1y = parseCoord(document.getElementById('f3_p1y').value); let az1 = Number(document.getElementById('f3_az1').value);
+    let p2x = parseCoord(document.getElementById('f3_p2x').value); let p2y = parseCoord(document.getElementById('f3_p2y').value); let az2 = Number(document.getElementById('f3_az2').value);
     if(p1x===null || p2x===null) return;
-
-    let rad1 = az1 * (2 * Math.PI / MILS_CIRCLE);
-    let rad2 = az2 * (2 * Math.PI / MILS_CIRCLE);
-    let tan1 = Math.tan(Math.PI/2 - rad1);
-    let tan2 = Math.tan(Math.PI/2 - rad2);
-    
+    let rad1 = az1 * (2 * Math.PI / MILS_CIRCLE); let rad2 = az2 * (2 * Math.PI / MILS_CIRCLE);
+    let tan1 = Math.tan(Math.PI/2 - rad1); let tan2 = Math.tan(Math.PI/2 - rad2);
     let res = document.getElementById('res3');
-    if (Math.abs(tan1 - tan2) < 0.0001) {
-      res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
-    } else {
-      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2);
-      let intY = tan1 * (intX - p1x) + p1y;
+    if (Math.abs(tan1 - tan2) < 0.0001) res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
+    else {
+      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y;
       res.innerHTML = `交点座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f3', intX, intY);
     }
     res.classList.remove('hidden');
   }
 
-  // 4. 後方交会法 (NEW!)
   function calcF4() {
-    let p1x = parseCoord(document.getElementById('f4_p1x').value);
-    let p1y = parseCoord(document.getElementById('f4_p1y').value);
-    let az1 = Number(document.getElementById('f4_az1').value);
-    let p2x = parseCoord(document.getElementById('f4_p2x').value);
-    let p2y = parseCoord(document.getElementById('f4_p2y').value);
-    let az2 = Number(document.getElementById('f4_az2').value);
+    let p1x = parseCoord(document.getElementById('f4_p1x').value); let p1y = parseCoord(document.getElementById('f4_p1y').value); let az1 = Number(document.getElementById('f4_az1').value);
+    let p2x = parseCoord(document.getElementById('f4_p2x').value); let p2y = parseCoord(document.getElementById('f4_p2y').value); let az2 = Number(document.getElementById('f4_az2').value);
     if(p1x===null || p2x===null) return;
-
-    // 後方交会法は、相手からの逆方位角（±3200ミル）で前方交会法を行うのと同じ
-    let backAz1 = (az1 + 3200) % 6400;
-    let backAz2 = (az2 + 3200) % 6400;
-    
-    let rad1 = backAz1 * (2 * Math.PI / MILS_CIRCLE);
-    let rad2 = backAz2 * (2 * Math.PI / MILS_CIRCLE);
-    let tan1 = Math.tan(Math.PI/2 - rad1);
-    let tan2 = Math.tan(Math.PI/2 - rad2);
-    
+    let backAz1 = (az1 + 3200) % 6400; let backAz2 = (az2 + 3200) % 6400;
+    let rad1 = backAz1 * (2 * Math.PI / MILS_CIRCLE); let rad2 = backAz2 * (2 * Math.PI / MILS_CIRCLE);
+    let tan1 = Math.tan(Math.PI/2 - rad1); let tan2 = Math.tan(Math.PI/2 - rad2);
     let res = document.getElementById('res4');
-    if (Math.abs(tan1 - tan2) < 0.0001) {
-      res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
-    } else {
-      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2);
-      let intY = tan1 * (intX - p1x) + p1y;
+    if (Math.abs(tan1 - tan2) < 0.0001) res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
+    else {
+      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y;
       res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY);
     }
     res.classList.remove('hidden');
   }
 
-  // 5. トラバース計算
   function addRouteRow() {
-    let row = document.createElement('div');
-    row.className = 'route-row';
+    let row = document.createElement('div'); row.className = 'route-row';
     row.innerHTML = `<input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`;
     document.getElementById('routeList').appendChild(row);
   }
 
   function calcF5() {
-    let cx = parseCoord(document.getElementById('f5_x').value);
-    let cy = parseCoord(document.getElementById('f5_y').value);
+    let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value);
     if(cx===null || cy===null) return;
-
-    let azInputs = document.querySelectorAll('.r_az');
-    let distInputs = document.querySelectorAll('.r_dist');
+    let azInputs = document.querySelectorAll('.r_az'); let distInputs = document.querySelectorAll('.r_dist');
     let html = `始: E:${pad5(cx)} N:${pad5(cy)}<br>`;
-    
     for (let i = 0; i < azInputs.length; i++) {
       let az = Number(azInputs[i].value); let dist = Number(distInputs[i].value);
       if (azInputs[i].value === "" || distInputs[i].value === "") continue;
@@ -327,127 +325,196 @@
       cx = cx + dist * Math.sin(rad); cy = cy + dist * Math.cos(rad);
       html += `${i+1}: E:${pad5(cx)} N:${pad5(cy)}<br>`;
     }
-    
-    // 最終到達点を登録できるようにする
     html += getSaveUI('qname_f5', cx, cy);
-    let res = document.getElementById('res5');
-    res.innerHTML = html; res.classList.remove('hidden');
+    let res = document.getElementById('res5'); res.innerHTML = html; res.classList.remove('hidden');
   }
 
-  // 6. 座標の登録・一覧
   function savePointManual() {
     let name = document.getElementById('f6_name').value;
-    let x = parseCoord(document.getElementById('f6_x').value);
-    let y = parseCoord(document.getElementById('f6_y').value);
+    let x = parseCoord(document.getElementById('f6_x').value); let y = parseCoord(document.getElementById('f6_y').value);
     if (!name || x === null || y === null) { alert("名称と座標を入力してください"); return; }
-    
     savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y) });
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    
     document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = "";
-    updateSavedList();
+    updateSavedList(); drawMap(null, null, true);
   }
 
   function deletePoint(id) {
     savedPoints = savedPoints.filter(p => p.id !== id);
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    updateSavedList(); drawMap();
+    updateSavedList(); drawMap(null, null, true);
   }
 
   function updateSavedList() {
     let html = "";
     if (savedPoints.length === 0) html = "<p>登録データがありません</p>";
     savedPoints.forEach(p => {
-      html += `<div class="list-item">
-                 <div><strong>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}</div>
-                 <button onclick="deletePoint(${p.id})">削除</button>
-               </div>`;
+      html += `<div class="list-item"><div><strong>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}</div><button onclick="deletePoint(${p.id})">削除</button></div>`;
     });
     document.getElementById('savedList').innerHTML = html;
   }
 
-  // 7. マップ表示と計算
+  // ========== マップの描画とタッチ操作 ==========
+  
+  // マップのビュー状態を保持する変数
+  let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, minE: 0, minN: 0, padding: 30 };
+  let currentP1 = null; let currentP2 = null;
+
   function updateMapDropdowns() {
-    let start = document.getElementById('map_start');
-    let end = document.getElementById('map_end');
+    let start = document.getElementById('map_start'); let end = document.getElementById('map_end');
     let html = '<option value="">--- 選択してください ---</option>';
     savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name} (E:${pad5(p.e)} N:${pad5(p.n)})</option>`; });
     start.innerHTML = html; end.innerHTML = html;
   }
 
   function calcMap() {
-    let sId = document.getElementById('map_start').value;
-    let eId = document.getElementById('map_end').value;
+    let sId = document.getElementById('map_start').value; let eId = document.getElementById('map_end').value;
     if (!sId || !eId) return;
-    
-    let p1 = savedPoints.find(p => p.id == sId);
-    let p2 = savedPoints.find(p => p.id == eId);
-    let r = calcData(p1.e, p1.n, p2.e, p2.n);
-    
+    currentP1 = savedPoints.find(p => p.id == sId); currentP2 = savedPoints.find(p => p.id == eId);
+    let r = calcData(currentP1.e, currentP1.n, currentP2.e, currentP2.n);
     let res = document.getElementById('resMap');
-    res.innerHTML = `【${p1.name} → ${p2.name}】<br>方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m`;
+    res.innerHTML = `【${currentP1.name} → ${currentP2.name}】<br>方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m`;
     res.classList.remove('hidden');
-    drawMap(p1, p2);
+    drawMap(currentP1, currentP2, false);
   }
 
-  function drawMap(highlightP1 = null, highlightP2 = null) {
+  function resetMapView() {
+    drawMap(currentP1, currentP2, true);
+  }
+
+  function drawMap(highlightP1 = null, highlightP2 = null, resetView = false) {
     let canvas = document.getElementById('mapCanvas');
     let ctx = canvas.getContext('2d');
     let w = canvas.width, h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
+    
+    // ダークモード対応のカラー取得
+    const style = getComputedStyle(document.body);
+    const cBg = style.getPropertyValue('--map-bg').trim() || "#fff";
+    const cGrid = style.getPropertyValue('--map-grid').trim() || "#e0e0e0";
+    const cText = style.getPropertyValue('--map-text').trim() || "#888";
+    const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
+
+    ctx.fillStyle = cBg;
+    ctx.fillRect(0, 0, w, h);
 
     if (savedPoints.length === 0) {
-      ctx.fillStyle = "#999"; ctx.font = "16px sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = cText; ctx.font = "16px sans-serif"; ctx.textAlign = "center";
       ctx.fillText("座標が登録されていません", w/2, h/2); return;
     }
 
-    let minE = Math.min(...savedPoints.map(p => p.e));
-    let maxE = Math.max(...savedPoints.map(p => p.e));
-    let minN = Math.min(...savedPoints.map(p => p.n));
-    let maxN = Math.max(...savedPoints.map(p => p.n));
+    // 初回、またはリセットボタンが押された時にスケールを再計算
+    if (resetView) {
+      let maxE = Math.max(...savedPoints.map(p => p.e)); mapState.minE = Math.min(...savedPoints.map(p => p.e));
+      let maxN = Math.max(...savedPoints.map(p => p.n)); mapState.minN = Math.min(...savedPoints.map(p => p.n));
+      if (maxE - mapState.minE < 2000) { let mid = (maxE + mapState.minE)/2; mapState.minE = mid - 1000; maxE = mid + 1000; }
+      if (maxN - mapState.minN < 2000) { let mid = (maxN + mapState.minN)/2; mapState.minN = mid - 1000; maxN = mid + 1000; }
+      mapState.baseScale = Math.min((w - mapState.padding*2) / (maxE - mapState.minE), (h - mapState.padding*2) / (maxN - mapState.minN));
+      mapState.x = 0; mapState.y = 0; mapState.scale = 1;
+    }
 
-    if (maxE - minE < 2000) { let mid = (maxE + minE)/2; minE = mid - 1000; maxE = mid + 1000; }
-    if (maxN - minN < 2000) { let mid = (maxN + minN)/2; minN = mid - 1000; maxN = mid + 1000; }
+    // 座標計算関数（拡大縮小・パン移動を反映）
+    let getX = (e) => (mapState.padding + (e - mapState.minE) * mapState.baseScale) * mapState.scale + mapState.x;
+    let getY = (n) => (h - mapState.padding - (n - mapState.minN) * mapState.baseScale) * mapState.scale + mapState.y;
 
-    let padding = 30;
-    let scale = Math.min((w - padding*2) / (maxE - minE), (h - padding*2) / (maxN - minN));
+    // 方眼(1km)を描画
+    ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
+    
+    // 表示すべき範囲を逆算（画面外の線は描画しないと軽い）
+    let startE = Math.floor(mapState.minE / 1000) * 1000 - 10000;
+    let endE = mapState.minE + (w / mapState.baseScale / mapState.scale) + 10000;
+    let startN = Math.floor(mapState.minN / 1000) * 1000 - 10000;
+    let endN = mapState.minN + (h / mapState.baseScale / mapState.scale) + 10000;
 
-    let getX = (e) => padding + (e - minE) * scale;
-    let getY = (n) => h - padding - (n - minN) * scale;
-
-    ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = "#aaa";
     ctx.textAlign = "center";
-    let startE = Math.floor(minE / 1000) * 1000;
-    for(let e = startE; e <= maxE; e += 1000) {
+    for(let e = startE; e <= endE; e += 1000) {
       let x = getX(e);
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-      ctx.fillText(pad5(e).substring(0,2), x, h - 5);
+      if(x > -50 && x < w + 50) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        ctx.fillText(pad5(e).substring(0,2), x, h - 5);
+      }
     }
     ctx.textAlign = "left";
-    let startN = Math.floor(minN / 1000) * 1000;
-    for(let n = startN; n <= maxN; n += 1000) {
+    for(let n = startN; n <= endN; n += 1000) {
       let y = getY(n);
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-      ctx.fillText(pad5(n).substring(0,2), 5, y + 3);
+      if(y > -50 && y < h + 50) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        ctx.fillText(pad5(n).substring(0,2), 5, y + 3);
+      }
     }
 
+    // 計算した直線を引く
     if (highlightP1 && highlightP2) {
-      ctx.strokeStyle = 'rgba(0, 122, 255, 0.5)'; ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0, 122, 255, 0.7)'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n));
       ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke();
     }
 
+    // 座標点をプロット
     savedPoints.forEach(p => {
       let x = getX(p.e), y = getY(p.n);
-      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
-      ctx.fillStyle = '#ff3b30'; ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-      
-      ctx.fillStyle = '#333'; ctx.font = "bold 12px sans-serif";
-      ctx.fillText(p.name, x + 10, y + 4);
+      if(x > -20 && x < w + 20 && y > -20 && y < h + 20) {
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
+        ctx.fillStyle = '#ff3b30'; ctx.fill();
+        ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = cMainText; ctx.font = "bold 12px sans-serif";
+        ctx.fillText(p.name, x + 10, y + 4);
+      }
     });
   }
-  
+
+  // --- キャンバスのタッチイベント処理 ---
+  const canvas = document.getElementById('mapCanvas');
+  let isDragging = false;
+  let startPan = { x: 0, y: 0 };
+  let initialPinchDist = null;
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // 画面全体のスクロールを防ぐ
+    if (e.touches.length === 1) {
+      isDragging = true;
+      startPan = { x: e.touches[0].clientX - mapState.x, y: e.touches[0].clientY - mapState.y };
+    } else if (e.touches.length === 2) {
+      isDragging = false;
+      initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && isDragging) {
+      // 1本指：パン移動
+      mapState.x = e.touches[0].clientX - startPan.x;
+      mapState.y = e.touches[0].clientY - startPan.y;
+      requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
+    } else if (e.touches.length === 2 && initialPinchDist) {
+      // 2本指：ピンチズーム
+      const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      
+      const rect = canvas.getBoundingClientRect();
+      const canvasCenterX = centerX - rect.left;
+      const canvasCenterY = centerY - rect.top;
+
+      const scaleFactor = newDist / initialPinchDist;
+      
+      // ピンチの中心に向かって拡大縮小するように座標を調整
+      mapState.x = canvasCenterX - (canvasCenterX - mapState.x) * scaleFactor;
+      mapState.y = canvasCenterY - (canvasCenterY - mapState.y) * scaleFactor;
+      mapState.scale *= scaleFactor;
+
+      requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
+      initialPinchDist = newDist;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (e.touches.length < 2) initialPinchDist = null;
+    if (e.touches.length === 0) isDragging = false;
+  });
+
+  // 初期化実行
   updateSavedList();
 </script>
 </body>
