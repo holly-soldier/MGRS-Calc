@@ -67,18 +67,25 @@
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); }
     .hidden { display: none; }
 
+    /* クイックセーブ・色選択 */
     .quick-save { display: flex; gap: 10px; margin-top: 15px; align-items: center; justify-content: center; }
-    .quick-save input { padding: 10px; border-radius: 5px; font-size: 16px; width: 60%; font-family: sans-serif; }
-    .quick-save button { width: 35%; margin: 0; padding: 10px; background-color: #34c759; font-size: 14px; }
+    .quick-save input[type="text"] { padding: 10px; border-radius: 5px; font-size: 16px; flex: 1; font-family: sans-serif; }
+    .quick-save button { width: auto; margin: 0; padding: 10px 15px; background-color: #34c759; font-size: 14px; flex-shrink: 0; }
+    .color-picker { width: 44px; height: 44px; padding: 0; border: none; border-radius: 5px; background: none; cursor: pointer; flex-shrink: 0; }
 
+    /* リスト表示用 (ソート追加) */
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--list-border); }
     .list-item:last-child { border-bottom: none; }
     .list-item div { font-size: 14px; }
-    .list-item button { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
+    .list-item .delete-btn { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
+    
+    .sort-btns { display: flex; flex-direction: column; gap: 4px; }
+    .sort-btns button { width: 32px; height: 32px; padding: 0; margin: 0; background-color: #8e8e93; border-radius: 4px; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+    .sort-btns button:disabled { opacity: 0.3; }
 
     /* マップ用 */
     .map-container { position: relative; width: 100%; }
-    canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; /* デフォルトのスクロールを無効化 */ }
+    canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; }
   </style>
 </head>
 <body>
@@ -161,8 +168,12 @@
 
   <div id="func6" class="view hidden">
     <div class="card">
-      <h3>座標を登録する</h3>
+      <h3>座標を手動登録</h3>
       <div class="input-group">
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
+          <input type="color" id="f6_color" class="color-picker">
+          <span style="font-size: 14px; opacity: 0.8;">マップ表示色</span>
+        </div>
         <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
         <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標">
         <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標">
@@ -170,7 +181,7 @@
       <button class="btn-green" onclick="savePointManual()">登録</button>
     </div>
     <div class="card">
-      <h3>登録済み座標一覧</h3>
+      <h3>登録済み座標一覧 (並び替え可能)</h3>
       <div id="savedList"></div>
     </div>
   </div>
@@ -202,6 +213,9 @@
 
   const MILS_CIRCLE = 6400.0;
   let savedPoints = JSON.parse(localStorage.getItem('mgrsPoints') || '[]');
+  
+  // ★追加: 前回の選択色を引き継ぐ処理 (基本は赤色)
+  let lastColor = localStorage.getItem('mgrsLastColor') || '#ff3b30';
 
   const parseCoord = (val) => {
     if (val === "" || val === null || val === undefined) return null;
@@ -216,10 +230,25 @@
   };
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
+  // アプリ起動時および色変更時に全てのカラーピッカーを同期
+  function syncColorPickers(newColor) {
+    if(newColor) {
+      lastColor = newColor;
+      localStorage.setItem('mgrsLastColor', lastColor);
+    }
+    document.querySelectorAll('.color-picker').forEach(el => {
+      el.value = lastColor;
+    });
+  }
+
   function switchView() {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     let selected = document.getElementById('menu').value;
     document.getElementById(selected).classList.remove('hidden');
+    
+    // カラーピッカーの同期
+    syncColorPickers();
+    
     if (selected === 'func6') updateSavedList();
     if (selected === 'func7') { updateMapDropdowns(); drawMap(null, null, true); }
   }
@@ -235,29 +264,35 @@
     return { mil: mil, dist: dist };
   }
 
+  // クイックセーブUIにカラーピッカーを追加
   function getSaveUI(inputId, x, y) {
     return `<div class="quick-save">
-              <input type="text" id="${inputId}" placeholder="この座標の名称">
+              <input type="color" id="${inputId}_color" class="color-picker" onchange="syncColorPickers(this.value)">
+              <input type="text" id="${inputId}" placeholder="名称">
               <button onclick="quickSave('${inputId}', ${x}, ${y})">登録</button>
             </div>`;
   }
 
   function quickSave(inputId, x, y) {
     let name = document.getElementById(inputId).value;
+    let colorInput = document.getElementById(inputId + '_color');
+    let color = colorInput ? colorInput.value : lastColor;
+    
     if (!name) { alert("名称を入力してください"); return; }
-    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y) });
+    
+    syncColorPickers(color); // 色を記憶
+    
+    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
     alert(name + " を登録しました！");
     document.getElementById(inputId).value = "";
     updateSavedList(); updateMapDropdowns();
   }
 
-  // --- 計算ロジック (変更なし) ---
+  // --- 計算ロジック ---
   function calcF1() {
-    let sx = parseCoord(document.getElementById('f1_sx').value);
-    let sy = parseCoord(document.getElementById('f1_sy').value);
-    let ex = parseCoord(document.getElementById('f1_ex').value);
-    let ey = parseCoord(document.getElementById('f1_ey').value);
+    let sx = parseCoord(document.getElementById('f1_sx').value); let sy = parseCoord(document.getElementById('f1_sy').value);
+    let ex = parseCoord(document.getElementById('f1_ex').value); let ey = parseCoord(document.getElementById('f1_ey').value);
     if(sx===null || sy===null || ex===null || ey===null) return;
     let r = calcData(sx, sy, ex, ey);
     let res = document.getElementById('res1');
@@ -274,6 +309,7 @@
     let res = document.getElementById('res2');
     res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}` + getSaveUI('qname_f2', targetX, targetY);
     res.classList.remove('hidden');
+    syncColorPickers();
   }
 
   function calcF3() {
@@ -289,6 +325,7 @@
       res.innerHTML = `交点座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f3', intX, intY);
     }
     res.classList.remove('hidden');
+    syncColorPickers();
   }
 
   function calcF4() {
@@ -305,6 +342,7 @@
       res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY);
     }
     res.classList.remove('hidden');
+    syncColorPickers();
   }
 
   function addRouteRow() {
@@ -327,14 +365,24 @@
     }
     html += getSaveUI('qname_f5', cx, cy);
     let res = document.getElementById('res5'); res.innerHTML = html; res.classList.remove('hidden');
+    syncColorPickers();
   }
+
+  // --- 手動登録とソート機能 ---
+  document.getElementById('f6_color').addEventListener('change', function(e) {
+    syncColorPickers(e.target.value);
+  });
 
   function savePointManual() {
     let name = document.getElementById('f6_name').value;
     let x = parseCoord(document.getElementById('f6_x').value); let y = parseCoord(document.getElementById('f6_y').value);
+    let color = document.getElementById('f6_color').value;
+    
     if (!name || x === null || y === null) { alert("名称と座標を入力してください"); return; }
-    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y) });
+    
+    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    
     document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = "";
     updateSavedList(); drawMap(null, null, true);
   }
@@ -345,25 +393,51 @@
     updateSavedList(); drawMap(null, null, true);
   }
 
+  // ★追加: ソート(順番入れ替え)機能
+  function movePoint(index, direction) {
+    if (direction === -1 && index > 0) {
+      let temp = savedPoints[index - 1];
+      savedPoints[index - 1] = savedPoints[index];
+      savedPoints[index] = temp;
+    } else if (direction === 1 && index < savedPoints.length - 1) {
+      let temp = savedPoints[index + 1];
+      savedPoints[index + 1] = savedPoints[index];
+      savedPoints[index] = temp;
+    } else {
+      return;
+    }
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    updateSavedList();
+    drawMap(null, null, true);
+  }
+
   function updateSavedList() {
     let html = "";
     if (savedPoints.length === 0) html = "<p>登録データがありません</p>";
-    savedPoints.forEach(p => {
-      html += `<div class="list-item"><div><strong>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}</div><button onclick="deletePoint(${p.id})">削除</button></div>`;
+    savedPoints.forEach((p, index) => {
+      let pColor = p.color || '#ff3b30'; // 古いデータ用にデフォルト色を設定
+      html += `<div class="list-item">
+                 <div class="sort-btns">
+                   <button onclick="movePoint(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+                   <button onclick="movePoint(${index}, 1)" ${index === savedPoints.length - 1 ? 'disabled' : ''}>▼</button>
+                 </div>
+                 <div style="flex:1; margin-left: 15px;">
+                   <strong><span style="display:inline-block; width:12px; height:12px; background:${pColor}; border-radius:50%; margin-right:5px; vertical-align:middle;"></span>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}
+                 </div>
+                 <button class="delete-btn" onclick="deletePoint(${p.id})">削除</button>
+               </div>`;
     });
     document.getElementById('savedList').innerHTML = html;
   }
 
   // ========== マップの描画とタッチ操作 ==========
-  
-  // マップのビュー状態を保持する変数
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, minE: 0, minN: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
 
   function updateMapDropdowns() {
     let start = document.getElementById('map_start'); let end = document.getElementById('map_end');
     let html = '<option value="">--- 選択してください ---</option>';
-    savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name} (E:${pad5(p.e)} N:${pad5(p.n)})</option>`; });
+    savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
     start.innerHTML = html; end.innerHTML = html;
   }
 
@@ -387,7 +461,6 @@
     let ctx = canvas.getContext('2d');
     let w = canvas.width, h = canvas.height;
     
-    // ダークモード対応のカラー取得
     const style = getComputedStyle(document.body);
     const cBg = style.getPropertyValue('--map-bg').trim() || "#fff";
     const cGrid = style.getPropertyValue('--map-grid').trim() || "#e0e0e0";
@@ -402,7 +475,6 @@
       ctx.fillText("座標が登録されていません", w/2, h/2); return;
     }
 
-    // 初回、またはリセットボタンが押された時にスケールを再計算
     if (resetView) {
       let maxE = Math.max(...savedPoints.map(p => p.e)); mapState.minE = Math.min(...savedPoints.map(p => p.e));
       let maxN = Math.max(...savedPoints.map(p => p.n)); mapState.minN = Math.min(...savedPoints.map(p => p.n));
@@ -412,14 +484,11 @@
       mapState.x = 0; mapState.y = 0; mapState.scale = 1;
     }
 
-    // 座標計算関数（拡大縮小・パン移動を反映）
     let getX = (e) => (mapState.padding + (e - mapState.minE) * mapState.baseScale) * mapState.scale + mapState.x;
     let getY = (n) => (h - mapState.padding - (n - mapState.minN) * mapState.baseScale) * mapState.scale + mapState.y;
 
-    // 方眼(1km)を描画
     ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
     
-    // 表示すべき範囲を逆算（画面外の線は描画しないと軽い）
     let startE = Math.floor(mapState.minE / 1000) * 1000 - 10000;
     let endE = mapState.minE + (w / mapState.baseScale / mapState.scale) + 10000;
     let startN = Math.floor(mapState.minN / 1000) * 1000 - 10000;
@@ -442,19 +511,19 @@
       }
     }
 
-    // 計算した直線を引く
     if (highlightP1 && highlightP2) {
       ctx.strokeStyle = 'rgba(0, 122, 255, 0.7)'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n));
       ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke();
     }
 
-    // 座標点をプロット
+    // ★追加: 登録時に選択した色(p.color)でピンを描画
     savedPoints.forEach(p => {
       let x = getX(p.e), y = getY(p.n);
+      let pinColor = p.color || '#ff3b30';
       if(x > -20 && x < w + 20 && y > -20 && y < h + 20) {
         ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
-        ctx.fillStyle = '#ff3b30'; ctx.fill();
+        ctx.fillStyle = pinColor; ctx.fill();
         ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke();
         ctx.fillStyle = cMainText; ctx.font = "bold 12px sans-serif";
         ctx.fillText(p.name, x + 10, y + 4);
@@ -462,14 +531,14 @@
     });
   }
 
-  // --- キャンバスのタッチイベント処理 ---
+  // キャンバスのタッチイベント
   const canvas = document.getElementById('mapCanvas');
   let isDragging = false;
   let startPan = { x: 0, y: 0 };
   let initialPinchDist = null;
 
   canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // 画面全体のスクロールを防ぐ
+    e.preventDefault();
     if (e.touches.length === 1) {
       isDragging = true;
       startPan = { x: e.touches[0].clientX - mapState.x, y: e.touches[0].clientY - mapState.y };
@@ -482,12 +551,10 @@
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
     if (e.touches.length === 1 && isDragging) {
-      // 1本指：パン移動
       mapState.x = e.touches[0].clientX - startPan.x;
       mapState.y = e.touches[0].clientY - startPan.y;
       requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
     } else if (e.touches.length === 2 && initialPinchDist) {
-      // 2本指：ピンチズーム
       const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
       const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -498,7 +565,6 @@
 
       const scaleFactor = newDist / initialPinchDist;
       
-      // ピンチの中心に向かって拡大縮小するように座標を調整
       mapState.x = canvasCenterX - (canvasCenterX - mapState.x) * scaleFactor;
       mapState.y = canvasCenterY - (canvasCenterY - mapState.y) * scaleFactor;
       mapState.scale *= scaleFactor;
@@ -516,6 +582,7 @@
 
   // 初期化実行
   updateSavedList();
+  syncColorPickers();
 </script>
 </body>
 </html>
