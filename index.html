@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#007aff">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
-    /* ========== カラーテーマ変数 (ライト/ダーク自動切替) ========== */
+    /* ========== カラーテーマ変数 ========== */
     :root {
       --bg-color: #f2f2f7;
       --card-bg: #ffffff;
@@ -40,12 +40,11 @@
       }
     }
 
-    /* 全体のデザイン設定 */
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; }
     header { background-color: #007aff; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
     .container { padding: 15px; }
     
-    select, input { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); }
+    select, input[type="text"], input[type="number"] { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); }
     select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
     
     .card { background: var(--card-bg); padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; }
@@ -61,27 +60,28 @@
     button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-sizing: border-box; }
     button:active { background-color: #005bb5; }
     button.btn-green { background-color: #34c759; }
-    button.btn-red { background-color: #ff3b30; }
     button.btn-gray { background-color: #8e8e93; padding: 10px; font-size: 14px; margin-top: 10px; margin-bottom: 0;}
     
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); }
     .hidden { display: none; }
 
-    /* クイックセーブ・色選択 */
-    .quick-save { display: flex; gap: 10px; margin-top: 15px; align-items: center; justify-content: center; }
+    /* カラー選択とクイックセーブUI */
+    .color-select-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px; }
+    .color-select-row span { font-size: 16px; font-weight: bold; color: var(--text-color); }
+    .color-picker { width: 44px; height: 44px; padding: 0; border: none; border-radius: 5px; background: none; cursor: pointer; flex-shrink: 0; }
+    
+    .quick-save { display: flex; gap: 10px; align-items: center; justify-content: center; }
     .quick-save input[type="text"] { padding: 10px; border-radius: 5px; font-size: 16px; flex: 1; font-family: sans-serif; }
     .quick-save button { width: auto; margin: 0; padding: 10px 15px; background-color: #34c759; font-size: 14px; flex-shrink: 0; }
-    .color-picker { width: 44px; height: 44px; padding: 0; border: none; border-radius: 5px; background: none; cursor: pointer; flex-shrink: 0; }
 
-    /* リスト表示用 (ソート追加) */
-    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--list-border); }
+    /* リスト表示用 (スライド並び替え対応) */
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--list-border); transition: background-color 0.2s; background-color: var(--card-bg); }
     .list-item:last-child { border-bottom: none; }
-    .list-item div { font-size: 14px; }
-    .list-item .delete-btn { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
+    .list-item.dragging { background-color: var(--result-bg); opacity: 0.8; box-shadow: inset 0 0 8px rgba(0,0,0,0.1); }
     
-    .sort-btns { display: flex; flex-direction: column; gap: 4px; }
-    .sort-btns button { width: 32px; height: 32px; padding: 0; margin: 0; background-color: #8e8e93; border-radius: 4px; font-size: 14px; display: flex; align-items: center; justify-content: center; }
-    .sort-btns button:disabled { opacity: 0.3; }
+    .drag-handle { padding: 10px 15px 10px 5px; font-size: 24px; color: #888; font-weight: bold; touch-action: none; cursor: grab; }
+    .list-item div.content { font-size: 14px; flex: 1; margin-left: 5px; pointer-events: none; }
+    .list-item .delete-btn { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
 
     /* マップ用 */
     .map-container { position: relative; width: 100%; }
@@ -169,11 +169,11 @@
   <div id="func6" class="view hidden">
     <div class="card">
       <h3>座標を手動登録</h3>
+      <div class="color-select-row">
+        <span>マップ表示色</span>
+        <input type="color" id="f6_color" class="color-picker">
+      </div>
       <div class="input-group">
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
-          <input type="color" id="f6_color" class="color-picker">
-          <span style="font-size: 14px; opacity: 0.8;">マップ表示色</span>
-        </div>
         <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
         <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標">
         <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標">
@@ -181,7 +181,8 @@
       <button class="btn-green" onclick="savePointManual()">登録</button>
     </div>
     <div class="card">
-      <h3>登録済み座標一覧 (並び替え可能)</h3>
+      <h3>登録済み座標一覧</h3>
+      <p style="font-size:12px; margin-top:0; opacity:0.7;">※「≡」を長押しして上下にスライドで並び替え</p>
       <div id="savedList"></div>
     </div>
   </div>
@@ -213,8 +214,6 @@
 
   const MILS_CIRCLE = 6400.0;
   let savedPoints = JSON.parse(localStorage.getItem('mgrsPoints') || '[]');
-  
-  // ★追加: 前回の選択色を引き継ぐ処理 (基本は赤色)
   let lastColor = localStorage.getItem('mgrsLastColor') || '#ff3b30';
 
   const parseCoord = (val) => {
@@ -230,25 +229,19 @@
   };
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
-  // アプリ起動時および色変更時に全てのカラーピッカーを同期
   function syncColorPickers(newColor) {
     if(newColor) {
       lastColor = newColor;
       localStorage.setItem('mgrsLastColor', lastColor);
     }
-    document.querySelectorAll('.color-picker').forEach(el => {
-      el.value = lastColor;
-    });
+    document.querySelectorAll('.color-picker').forEach(el => { el.value = lastColor; });
   }
 
   function switchView() {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     let selected = document.getElementById('menu').value;
     document.getElementById(selected).classList.remove('hidden');
-    
-    // カラーピッカーの同期
     syncColorPickers();
-    
     if (selected === 'func6') updateSavedList();
     if (selected === 'func7') { updateMapDropdowns(); drawMap(null, null, true); }
   }
@@ -264,12 +257,17 @@
     return { mil: mil, dist: dist };
   }
 
-  // クイックセーブUIにカラーピッカーを追加
+  // クイックセーブUI (左右配置に変更)
   function getSaveUI(inputId, x, y) {
-    return `<div class="quick-save">
-              <input type="color" id="${inputId}_color" class="color-picker" onchange="syncColorPickers(this.value)">
-              <input type="text" id="${inputId}" placeholder="名称">
-              <button onclick="quickSave('${inputId}', ${x}, ${y})">登録</button>
+    return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
+              <div class="color-select-row" style="margin-bottom:10px;">
+                <span style="font-size: 14px;">マップ表示色</span>
+                <input type="color" id="${inputId}_color" class="color-picker" onchange="syncColorPickers(this.value)">
+              </div>
+              <div class="quick-save">
+                <input type="text" id="${inputId}" placeholder="名称">
+                <button onclick="quickSave('${inputId}', ${x}, ${y})">登録</button>
+              </div>
             </div>`;
   }
 
@@ -277,11 +275,8 @@
     let name = document.getElementById(inputId).value;
     let colorInput = document.getElementById(inputId + '_color');
     let color = colorInput ? colorInput.value : lastColor;
-    
     if (!name) { alert("名称を入力してください"); return; }
-    
-    syncColorPickers(color); // 色を記憶
-    
+    syncColorPickers(color);
     savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
     alert(name + " を登録しました！");
@@ -289,7 +284,7 @@
     updateSavedList(); updateMapDropdowns();
   }
 
-  // --- 計算ロジック ---
+  // --- 各機能の計算 ---
   function calcF1() {
     let sx = parseCoord(document.getElementById('f1_sx').value); let sy = parseCoord(document.getElementById('f1_sy').value);
     let ex = parseCoord(document.getElementById('f1_ex').value); let ey = parseCoord(document.getElementById('f1_ey').value);
@@ -368,21 +363,17 @@
     syncColorPickers();
   }
 
-  // --- 手動登録とソート機能 ---
-  document.getElementById('f6_color').addEventListener('change', function(e) {
-    syncColorPickers(e.target.value);
-  });
+  // --- 登録・一覧機能 ---
+  document.getElementById('f6_color').addEventListener('change', function(e) { syncColorPickers(e.target.value); });
 
   function savePointManual() {
     let name = document.getElementById('f6_name').value;
     let x = parseCoord(document.getElementById('f6_x').value); let y = parseCoord(document.getElementById('f6_y').value);
     let color = document.getElementById('f6_color').value;
-    
     if (!name || x === null || y === null) { alert("名称と座標を入力してください"); return; }
     
     savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    
     document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = "";
     updateSavedList(); drawMap(null, null, true);
   }
@@ -393,35 +384,14 @@
     updateSavedList(); drawMap(null, null, true);
   }
 
-  // ★追加: ソート(順番入れ替え)機能
-  function movePoint(index, direction) {
-    if (direction === -1 && index > 0) {
-      let temp = savedPoints[index - 1];
-      savedPoints[index - 1] = savedPoints[index];
-      savedPoints[index] = temp;
-    } else if (direction === 1 && index < savedPoints.length - 1) {
-      let temp = savedPoints[index + 1];
-      savedPoints[index + 1] = savedPoints[index];
-      savedPoints[index] = temp;
-    } else {
-      return;
-    }
-    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    updateSavedList();
-    drawMap(null, null, true);
-  }
-
   function updateSavedList() {
     let html = "";
-    if (savedPoints.length === 0) html = "<p>登録データがありません</p>";
-    savedPoints.forEach((p, index) => {
-      let pColor = p.color || '#ff3b30'; // 古いデータ用にデフォルト色を設定
-      html += `<div class="list-item">
-                 <div class="sort-btns">
-                   <button onclick="movePoint(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
-                   <button onclick="movePoint(${index}, 1)" ${index === savedPoints.length - 1 ? 'disabled' : ''}>▼</button>
-                 </div>
-                 <div style="flex:1; margin-left: 15px;">
+    if (savedPoints.length === 0) html = "<p style='text-align:center; color:#888;'>登録データがありません</p>";
+    savedPoints.forEach((p) => {
+      let pColor = p.color || '#ff3b30';
+      html += `<div class="list-item" data-id="${p.id}">
+                 <div class="drag-handle">≡</div>
+                 <div class="content">
                    <strong><span style="display:inline-block; width:12px; height:12px; background:${pColor}; border-radius:50%; margin-right:5px; vertical-align:middle;"></span>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}
                  </div>
                  <button class="delete-btn" onclick="deletePoint(${p.id})">削除</button>
@@ -429,6 +399,53 @@
     });
     document.getElementById('savedList').innerHTML = html;
   }
+
+  // ========== ドラッグ＆ドロップ (スライド並び替え) 処理 ==========
+  const listContainer = document.getElementById('savedList');
+  let dragEl = null;
+
+  listContainer.addEventListener('touchstart', function(e) {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    e.preventDefault(); // スクロールを防止して掴む
+    dragEl = handle.closest('.list-item');
+    dragEl.classList.add('dragging');
+  }, {passive: false});
+
+  listContainer.addEventListener('touchmove', function(e) {
+    if (!dragEl) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!target) return;
+    const targetItem = target.closest('.list-item');
+
+    // 重なった要素が自分以外なら、位置を入れ替える
+    if (targetItem && targetItem !== dragEl) {
+      const rect = targetItem.getBoundingClientRect();
+      // 指が要素の半分より下に行ったら、その後ろに挿入
+      const isNext = (touch.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+      targetItem.parentNode.insertBefore(dragEl, isNext ? targetItem.nextSibling : targetItem);
+    }
+  }, {passive: false});
+
+  listContainer.addEventListener('touchend', function(e) {
+    if (!dragEl) return;
+    dragEl.classList.remove('dragging');
+    dragEl = null;
+
+    // DOMの順番から配列を再構築してセーブ
+    const items = document.querySelectorAll('#savedList .list-item');
+    let newArray = [];
+    items.forEach(item => {
+      const id = parseInt(item.getAttribute('data-id'));
+      const point = savedPoints.find(p => p.id === id);
+      if(point) newArray.push(point);
+    });
+    savedPoints = newArray;
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    updateMapDropdowns();
+  });
 
   // ========== マップの描画とタッチ操作 ==========
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, minE: 0, minN: 0, padding: 30 };
@@ -457,8 +474,7 @@
   }
 
   function drawMap(highlightP1 = null, highlightP2 = null, resetView = false) {
-    let canvas = document.getElementById('mapCanvas');
-    let ctx = canvas.getContext('2d');
+    let canvas = document.getElementById('mapCanvas'); let ctx = canvas.getContext('2d');
     let w = canvas.width, h = canvas.height;
     
     const style = getComputedStyle(document.body);
@@ -467,8 +483,7 @@
     const cText = style.getPropertyValue('--map-text').trim() || "#888";
     const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
 
-    ctx.fillStyle = cBg;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = cBg; ctx.fillRect(0, 0, w, h);
 
     if (savedPoints.length === 0) {
       ctx.fillStyle = cText; ctx.font = "16px sans-serif"; ctx.textAlign = "center";
@@ -488,11 +503,8 @@
     let getY = (n) => (h - mapState.padding - (n - mapState.minN) * mapState.baseScale) * mapState.scale + mapState.y;
 
     ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
-    
-    let startE = Math.floor(mapState.minE / 1000) * 1000 - 10000;
-    let endE = mapState.minE + (w / mapState.baseScale / mapState.scale) + 10000;
-    let startN = Math.floor(mapState.minN / 1000) * 1000 - 10000;
-    let endN = mapState.minN + (h / mapState.baseScale / mapState.scale) + 10000;
+    let startE = Math.floor(mapState.minE / 1000) * 1000 - 10000; let endE = mapState.minE + (w / mapState.baseScale / mapState.scale) + 10000;
+    let startN = Math.floor(mapState.minN / 1000) * 1000 - 10000; let endN = mapState.minN + (h / mapState.baseScale / mapState.scale) + 10000;
 
     ctx.textAlign = "center";
     for(let e = startE; e <= endE; e += 1000) {
@@ -517,7 +529,6 @@
       ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke();
     }
 
-    // ★追加: 登録時に選択した色(p.color)でピンを描画
     savedPoints.forEach(p => {
       let x = getX(p.e), y = getY(p.n);
       let pinColor = p.color || '#ff3b30';
@@ -531,44 +542,32 @@
     });
   }
 
-  // キャンバスのタッチイベント
   const canvas = document.getElementById('mapCanvas');
-  let isDragging = false;
-  let startPan = { x: 0, y: 0 };
-  let initialPinchDist = null;
+  let isDragging = false; let startPan = { x: 0, y: 0 }; let initialPinchDist = null;
 
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     if (e.touches.length === 1) {
-      isDragging = true;
-      startPan = { x: e.touches[0].clientX - mapState.x, y: e.touches[0].clientY - mapState.y };
+      isDragging = true; startPan = { x: e.touches[0].clientX - mapState.x, y: e.touches[0].clientY - mapState.y };
     } else if (e.touches.length === 2) {
-      isDragging = false;
-      initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      isDragging = false; initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     }
   }, { passive: false });
 
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
     if (e.touches.length === 1 && isDragging) {
-      mapState.x = e.touches[0].clientX - startPan.x;
-      mapState.y = e.touches[0].clientY - startPan.y;
+      mapState.x = e.touches[0].clientX - startPan.x; mapState.y = e.touches[0].clientY - startPan.y;
       requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
     } else if (e.touches.length === 2 && initialPinchDist) {
       const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2; const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       const rect = canvas.getBoundingClientRect();
-      const canvasCenterX = centerX - rect.left;
-      const canvasCenterY = centerY - rect.top;
-
+      const canvasCenterX = centerX - rect.left; const canvasCenterY = centerY - rect.top;
       const scaleFactor = newDist / initialPinchDist;
-      
       mapState.x = canvasCenterX - (canvasCenterX - mapState.x) * scaleFactor;
       mapState.y = canvasCenterY - (canvasCenterY - mapState.y) * scaleFactor;
       mapState.scale *= scaleFactor;
-
       requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
       initialPinchDist = newDist;
     }
