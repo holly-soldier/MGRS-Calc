@@ -17,6 +17,7 @@
     .card h3 { margin-top: 0; font-size: 16px; color: #333; margin-bottom: 10px; }
     
     .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+    /* inputをtextに変更し、キーボードを数字に限定 */
     .input-group input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
     
     .route-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
@@ -31,13 +32,18 @@
     .result { background: #e5f0ff; padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: #004080; }
     .hidden { display: none; }
 
+    /* クイックセーブ（結果画面からの登録）用 */
+    .quick-save { display: flex; gap: 10px; margin-top: 15px; align-items: center; justify-content: center; }
+    .quick-save input { padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; width: 60%; font-family: sans-serif; }
+    .quick-save button { width: 35%; margin: 0; padding: 10px; background-color: #34c759; font-size: 14px; }
+
     /* リスト表示用 */
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     .list-item:last-child { border-bottom: none; }
     .list-item div { font-size: 14px; }
     .list-item button { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
 
-    /* マップ(Canvas)用 */
+    /* マップ用 */
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: #fff; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; }
   </style>
 </head>
@@ -47,20 +53,21 @@
 
 <div class="container">
   <select id="menu" onchange="switchView()">
-    <option value="func1">1. 現在地から座標を求める</option>
-    <option value="func2">2. 2点から諸元を求める</option>
-    <option value="func3">3. 交会法 (2点から目標特定)</option>
-    <option value="func4">4. 連続計算 (ルート作成)</option>
-    <option value="func5">5. 座標の登録・一覧</option>
-    <option value="func6">6. マップ (1km方眼・計算)</option>
+    <option value="func1">1. 座標対座標</option>
+    <option value="func2">2. 極座標</option>
+    <option value="func3">3. 前方交会法</option>
+    <option value="func4">4. 後方交会法</option>
+    <option value="func5">5. トラバース計算</option>
+    <option value="func6">6. 座標の登録・一覧</option>
+    <option value="func7">7. マップ (1km方眼)</option>
   </select>
 
   <div id="func1" class="view">
     <div class="card">
       <h3>現在地</h3>
-      <div class="input-group"><input type="number" id="f1_x" placeholder="E座標"><input type="number" id="f1_y" placeholder="N座標"></div>
-      <h3>目標への諸元</h3>
-      <div class="input-group"><input type="number" id="f1_az" placeholder="方位角(mil)"><input type="number" id="f1_dist" placeholder="距離(m)"></div>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f1_sx" placeholder="E座標"><input type="text" inputmode="numeric" id="f1_sy" placeholder="N座標"></div>
+      <h3>目標地</h3>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f1_ex" placeholder="E座標"><input type="text" inputmode="numeric" id="f1_ey" placeholder="N座標"></div>
     </div>
     <button onclick="calcF1()">計算実行</button>
     <div id="res1" class="result hidden"></div>
@@ -69,9 +76,9 @@
   <div id="func2" class="view hidden">
     <div class="card">
       <h3>現在地</h3>
-      <div class="input-group"><input type="number" id="f2_sx" placeholder="E座標"><input type="number" id="f2_sy" placeholder="N座標"></div>
-      <h3>目標地</h3>
-      <div class="input-group"><input type="number" id="f2_ex" placeholder="E座標"><input type="number" id="f2_ey" placeholder="N座標"></div>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f2_x" placeholder="E座標"><input type="text" inputmode="numeric" id="f2_y" placeholder="N座標"></div>
+      <h3>目標への諸元</h3>
+      <div class="input-group"><input type="number" id="f2_az" placeholder="方位角(mil)"><input type="number" id="f2_dist" placeholder="距離(m)"></div>
     </div>
     <button onclick="calcF2()">計算実行</button>
     <div id="res2" class="result hidden"></div>
@@ -79,12 +86,12 @@
 
   <div id="func3" class="view hidden">
     <div class="card">
-      <h3>観測点-1</h3>
-      <div class="input-group"><input type="number" id="f3_p1x" placeholder="E座標"><input type="number" id="f3_p1y" placeholder="N座標"><input type="number" id="f3_az1" placeholder="方位角-1 (mil)"></div>
+      <h3>観測点-A</h3>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f3_p1x" placeholder="E座標"><input type="text" inputmode="numeric" id="f3_p1y" placeholder="N座標"><input type="number" id="f3_az1" placeholder="目標への方位角 (mil)"></div>
     </div>
     <div class="card">
-      <h3>観測点-2</h3>
-      <div class="input-group"><input type="number" id="f3_p2x" placeholder="E座標"><input type="number" id="f3_p2y" placeholder="N座標"><input type="number" id="f3_az2" placeholder="方位角-2 (mil)"></div>
+      <h3>観測点-B</h3>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f3_p2x" placeholder="E座標"><input type="text" inputmode="numeric" id="f3_p2y" placeholder="N座標"><input type="number" id="f3_az2" placeholder="目標への方位角 (mil)"></div>
     </div>
     <button onclick="calcF3()">計算実行</button>
     <div id="res3" class="result hidden"></div>
@@ -92,27 +99,41 @@
 
   <div id="func4" class="view hidden">
     <div class="card">
+      <p style="font-size:14px; color:#666; margin-top:0;">未知の現在地から、既知の2点へ方位角を測定し、現在地を求めます。</p>
+      <h3>既知点-A</h3>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f4_p1x" placeholder="E座標"><input type="text" inputmode="numeric" id="f4_p1y" placeholder="N座標"><input type="number" id="f4_az1" placeholder="Aへの測定方位角 (mil)"></div>
+    </div>
+    <div class="card">
+      <h3>既知点-B</h3>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f4_p2x" placeholder="E座標"><input type="text" inputmode="numeric" id="f4_p2y" placeholder="N座標"><input type="number" id="f4_az2" placeholder="Bへの測定方位角 (mil)"></div>
+    </div>
+    <button onclick="calcF4()">計算実行</button>
+    <div id="res4" class="result hidden"></div>
+  </div>
+
+  <div id="func5" class="view hidden">
+    <div class="card">
       <h3>開始点</h3>
-      <div class="input-group"><input type="number" id="f4_x" placeholder="E座標"><input type="number" id="f4_y" placeholder="N座標"></div>
+      <div class="input-group"><input type="text" inputmode="numeric" id="f5_x" placeholder="E座標"><input type="text" inputmode="numeric" id="f5_y" placeholder="N座標"></div>
       <h3>移動リスト</h3>
       <div id="routeList">
         <div class="route-row"><input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"></div>
       </div>
       <button class="btn-green" onclick="addRouteRow()" style="margin-top:10px;">＋ 移動を追加</button>
     </div>
-    <button onclick="calcF4()">計算実行</button>
-    <div id="res4" class="result hidden" style="text-align: left; font-size:16px;"></div>
+    <button onclick="calcF5()">計算実行</button>
+    <div id="res5" class="result hidden" style="text-align: left; font-size:16px;"></div>
   </div>
 
-  <div id="func5" class="view hidden">
+  <div id="func6" class="view hidden">
     <div class="card">
       <h3>座標を登録する</h3>
       <div class="input-group">
-        <input type="text" id="f5_name" placeholder="名称 (例: 観測所A)">
-        <input type="number" id="f5_x" placeholder="E座標">
-        <input type="number" id="f5_y" placeholder="N座標">
+        <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
+        <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標">
+        <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標">
       </div>
-      <button class="btn-green" onclick="savePoint()">登録</button>
+      <button class="btn-green" onclick="savePointManual()">登録</button>
     </div>
     <div class="card">
       <h3>登録済み座標一覧</h3>
@@ -120,12 +141,12 @@
     </div>
   </div>
 
-  <div id="func6" class="view hidden">
+  <div id="func7" class="view hidden">
     <div class="card">
       <h3>マップ (1km方眼)</h3>
       <canvas id="mapCanvas" width="400" height="400"></canvas>
       
-      <h3>登録座標から計算</h3>
+      <h3>登録座標から諸元計算</h3>
       <div class="input-group">
         <select id="map_start"></select>
         <select id="map_end"></select>
@@ -144,7 +165,13 @@
   const MILS_CIRCLE = 6400.0;
   let savedPoints = JSON.parse(localStorage.getItem('mgrsPoints') || '[]');
 
-  // ★修正ポイント: マイナス座標を100,000でループさせて5桁に補正
+  // ★修正ポイント: 入力文字列を「左詰め（右を0埋め）」で5桁にしてから数値化する
+  const parseCoord = (val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    let s = String(val).trim().substring(0, 5).padEnd(5, '0');
+    return Number(s);
+  };
+
   const pad5 = (num) => {
     let n = Math.round(num);
     n = ((n % 100000) + 100000) % 100000;
@@ -156,25 +183,8 @@
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     let selected = document.getElementById('menu').value;
     document.getElementById(selected).classList.remove('hidden');
-    
-    // タブ切り替え時にリストやマップを更新
-    if (selected === 'func5') updateSavedList();
-    if (selected === 'func6') { updateMapDropdowns(); drawMap(); }
-  }
-
-  // ===== 機能1〜4 (計算ロジック) =====
-  function calcF1() {
-    let x = Number(document.getElementById('f1_x').value);
-    let y = Number(document.getElementById('f1_y').value);
-    let az = Number(document.getElementById('f1_az').value);
-    let dist = Number(document.getElementById('f1_dist').value);
-    let rad = az * (2 * Math.PI / MILS_CIRCLE);
-    let targetX = x + dist * Math.sin(rad);
-    let targetY = y + dist * Math.cos(rad);
-    
-    let res = document.getElementById('res1');
-    res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}`;
-    res.classList.remove('hidden');
+    if (selected === 'func6') updateSavedList();
+    if (selected === 'func7') { updateMapDropdowns(); drawMap(); }
   }
 
   function calcData(sx, sy, ex, ey) {
@@ -188,24 +198,65 @@
     return { mil: mil, dist: dist };
   }
 
-  function calcF2() {
-    let sx = Number(document.getElementById('f2_sx').value);
-    let sy = Number(document.getElementById('f2_sy').value);
-    let ex = Number(document.getElementById('f2_ex').value);
-    let ey = Number(document.getElementById('f2_ey').value);
+  // クイックセーブ機能 (結果画面から直接登録)
+  function getSaveUI(inputId, x, y) {
+    return `<div class="quick-save">
+              <input type="text" id="${inputId}" placeholder="この座標の名称">
+              <button onclick="quickSave('${inputId}', ${x}, ${y})">登録</button>
+            </div>`;
+  }
+
+  function quickSave(inputId, x, y) {
+    let name = document.getElementById(inputId).value;
+    if (!name) { alert("名称を入力してください"); return; }
+    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y) });
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    alert(name + " を登録しました！");
+    document.getElementById(inputId).value = "";
+    updateSavedList(); updateMapDropdowns();
+  }
+
+  // 1. 座標対座標
+  function calcF1() {
+    let sx = parseCoord(document.getElementById('f1_sx').value);
+    let sy = parseCoord(document.getElementById('f1_sy').value);
+    let ex = parseCoord(document.getElementById('f1_ex').value);
+    let ey = parseCoord(document.getElementById('f1_ey').value);
+    if(sx===null || sy===null || ex===null || ey===null) return;
+    
     let r = calcData(sx, sy, ex, ey);
-    let res = document.getElementById('res2');
+    let res = document.getElementById('res1');
     res.innerHTML = `方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m`;
     res.classList.remove('hidden');
   }
 
+  // 2. 極座標
+  function calcF2() {
+    let x = parseCoord(document.getElementById('f2_x').value);
+    let y = parseCoord(document.getElementById('f2_y').value);
+    let az = Number(document.getElementById('f2_az').value);
+    let dist = Number(document.getElementById('f2_dist').value);
+    if(x===null || y===null) return;
+
+    let rad = az * (2 * Math.PI / MILS_CIRCLE);
+    let targetX = x + dist * Math.sin(rad);
+    let targetY = y + dist * Math.cos(rad);
+    
+    let res = document.getElementById('res2');
+    res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}` + getSaveUI('qname_f2', targetX, targetY);
+    res.classList.remove('hidden');
+  }
+
+  // 3. 前方交会法
   function calcF3() {
-    let p1x = Number(document.getElementById('f3_p1x').value);
-    let p1y = Number(document.getElementById('f3_p1y').value);
+    let p1x = parseCoord(document.getElementById('f3_p1x').value);
+    let p1y = parseCoord(document.getElementById('f3_p1y').value);
     let az1 = Number(document.getElementById('f3_az1').value);
-    let p2x = Number(document.getElementById('f3_p2x').value);
-    let p2y = Number(document.getElementById('f3_p2y').value);
+    let p2x = parseCoord(document.getElementById('f3_p2x').value);
+    let p2y = parseCoord(document.getElementById('f3_p2y').value);
     let az2 = Number(document.getElementById('f3_az2').value);
+    if(p1x===null || p2x===null) return;
+
     let rad1 = az1 * (2 * Math.PI / MILS_CIRCLE);
     let rad2 = az2 * (2 * Math.PI / MILS_CIRCLE);
     let tan1 = Math.tan(Math.PI/2 - rad1);
@@ -217,11 +268,42 @@
     } else {
       let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2);
       let intY = tan1 * (intX - p1x) + p1y;
-      res.innerHTML = `交点座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}`;
+      res.innerHTML = `交点座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f3', intX, intY);
     }
     res.classList.remove('hidden');
   }
 
+  // 4. 後方交会法 (NEW!)
+  function calcF4() {
+    let p1x = parseCoord(document.getElementById('f4_p1x').value);
+    let p1y = parseCoord(document.getElementById('f4_p1y').value);
+    let az1 = Number(document.getElementById('f4_az1').value);
+    let p2x = parseCoord(document.getElementById('f4_p2x').value);
+    let p2y = parseCoord(document.getElementById('f4_p2y').value);
+    let az2 = Number(document.getElementById('f4_az2').value);
+    if(p1x===null || p2x===null) return;
+
+    // 後方交会法は、相手からの逆方位角（±3200ミル）で前方交会法を行うのと同じ
+    let backAz1 = (az1 + 3200) % 6400;
+    let backAz2 = (az2 + 3200) % 6400;
+    
+    let rad1 = backAz1 * (2 * Math.PI / MILS_CIRCLE);
+    let rad2 = backAz2 * (2 * Math.PI / MILS_CIRCLE);
+    let tan1 = Math.tan(Math.PI/2 - rad1);
+    let tan2 = Math.tan(Math.PI/2 - rad2);
+    
+    let res = document.getElementById('res4');
+    if (Math.abs(tan1 - tan2) < 0.0001) {
+      res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
+    } else {
+      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2);
+      let intY = tan1 * (intX - p1x) + p1y;
+      res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY);
+    }
+    res.classList.remove('hidden');
+  }
+
+  // 5. トラバース計算
   function addRouteRow() {
     let row = document.createElement('div');
     row.className = 'route-row';
@@ -229,9 +311,11 @@
     document.getElementById('routeList').appendChild(row);
   }
 
-  function calcF4() {
-    let cx = Number(document.getElementById('f4_x').value);
-    let cy = Number(document.getElementById('f4_y').value);
+  function calcF5() {
+    let cx = parseCoord(document.getElementById('f5_x').value);
+    let cy = parseCoord(document.getElementById('f5_y').value);
+    if(cx===null || cy===null) return;
+
     let azInputs = document.querySelectorAll('.r_az');
     let distInputs = document.querySelectorAll('.r_dist');
     let html = `始: E:${pad5(cx)} N:${pad5(cy)}<br>`;
@@ -243,28 +327,31 @@
       cx = cx + dist * Math.sin(rad); cy = cy + dist * Math.cos(rad);
       html += `${i+1}: E:${pad5(cx)} N:${pad5(cy)}<br>`;
     }
-    let res = document.getElementById('res4');
+    
+    // 最終到達点を登録できるようにする
+    html += getSaveUI('qname_f5', cx, cy);
+    let res = document.getElementById('res5');
     res.innerHTML = html; res.classList.remove('hidden');
   }
 
-  // ===== 機能5 (登録・一覧) =====
-  function savePoint() {
-    let name = document.getElementById('f5_name').value;
-    let x = document.getElementById('f5_x').value;
-    let y = document.getElementById('f5_y').value;
-    if (!name || x === "" || y === "") { alert("名称と座標を入力してください"); return; }
+  // 6. 座標の登録・一覧
+  function savePointManual() {
+    let name = document.getElementById('f6_name').value;
+    let x = parseCoord(document.getElementById('f6_x').value);
+    let y = parseCoord(document.getElementById('f6_y').value);
+    if (!name || x === null || y === null) { alert("名称と座標を入力してください"); return; }
     
     savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y) });
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
     
-    document.getElementById('f5_name').value = ""; document.getElementById('f5_x').value = ""; document.getElementById('f5_y').value = "";
+    document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = "";
     updateSavedList();
   }
 
   function deletePoint(id) {
     savedPoints = savedPoints.filter(p => p.id !== id);
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    updateSavedList();
+    updateSavedList(); drawMap();
   }
 
   function updateSavedList() {
@@ -279,7 +366,7 @@
     document.getElementById('savedList').innerHTML = html;
   }
 
-  // ===== 機能6 (マップ表示と計算) =====
+  // 7. マップ表示と計算
   function updateMapDropdowns() {
     let start = document.getElementById('map_start');
     let end = document.getElementById('map_end');
@@ -300,7 +387,7 @@
     let res = document.getElementById('resMap');
     res.innerHTML = `【${p1.name} → ${p2.name}】<br>方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m`;
     res.classList.remove('hidden');
-    drawMap(p1, p2); // 線を引くために再描画
+    drawMap(p1, p2);
   }
 
   function drawMap(highlightP1 = null, highlightP2 = null) {
@@ -314,13 +401,11 @@
       ctx.fillText("座標が登録されていません", w/2, h/2); return;
     }
 
-    // 表示範囲を計算 (最小値・最大値)
     let minE = Math.min(...savedPoints.map(p => p.e));
     let maxE = Math.max(...savedPoints.map(p => p.e));
     let minN = Math.min(...savedPoints.map(p => p.n));
     let maxN = Math.max(...savedPoints.map(p => p.n));
 
-    // 範囲が狭すぎる場合は、最低2km四方にする
     if (maxE - minE < 2000) { let mid = (maxE + minE)/2; minE = mid - 1000; maxE = mid + 1000; }
     if (maxN - minN < 2000) { let mid = (maxN + minN)/2; minN = mid - 1000; maxN = mid + 1000; }
 
@@ -328,33 +413,30 @@
     let scale = Math.min((w - padding*2) / (maxE - minE), (h - padding*2) / (maxN - minN));
 
     let getX = (e) => padding + (e - minE) * scale;
-    let getY = (n) => h - padding - (n - minN) * scale; // Yは上がプラスなので反転
+    let getY = (n) => h - padding - (n - minN) * scale;
 
-    // 方眼(1km)を描画
     ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = "#aaa";
     ctx.textAlign = "center";
     let startE = Math.floor(minE / 1000) * 1000;
     for(let e = startE; e <= maxE; e += 1000) {
       let x = getX(e);
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-      ctx.fillText(pad5(e).substring(0,2), x, h - 5); // 下端に数値
+      ctx.fillText(pad5(e).substring(0,2), x, h - 5);
     }
     ctx.textAlign = "left";
     let startN = Math.floor(minN / 1000) * 1000;
     for(let n = startN; n <= maxN; n += 1000) {
       let y = getY(n);
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-      ctx.fillText(pad5(n).substring(0,2), 5, y + 3); // 左端に数値
+      ctx.fillText(pad5(n).substring(0,2), 5, y + 3);
     }
 
-    // 指定された2点間の線を引く
     if (highlightP1 && highlightP2) {
       ctx.strokeStyle = 'rgba(0, 122, 255, 0.5)'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n));
       ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke();
     }
 
-    // 座標点をプロット
     savedPoints.forEach(p => {
       let x = getX(p.e), y = getY(p.n);
       ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
@@ -366,7 +448,6 @@
     });
   }
   
-  // 初期化
   updateSavedList();
 </script>
 </body>
