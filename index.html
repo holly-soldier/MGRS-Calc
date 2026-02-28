@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MGRS Calc</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007aff">
+  <link rel="apple-touch-icon" href="icon.png">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 0; }
+    header { background-color: #007aff; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
+    .container { padding: 15px; }
+    select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; }
+    .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+    .card h3 { margin-top: 0; font-size: 16px; color: #333; margin-bottom: 10px; }
+    .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+    .input-group input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+    button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
+    button:active { background-color: #005bb5; }
+    .result { background: #e5f0ff; padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: #004080; }
+    .hidden { display: none; }
+    .route-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .route-row button { width: auto; padding: 10px; background-color: #ff3b30; margin-bottom: 0; }
+  </style>
+</head>
+<body>
+
+<header>MGRS 計算アプリ</header>
+
+<div class="container">
+  <select id="menu" onchange="switchView()">
+    <option value="func1">1. 現在地から座標を求める</option>
+    <option value="func2">2. 2点から諸元を求める</option>
+    <option value="func3">3. 交会法 (2点から目標特定)</option>
+    <option value="func4">4. 連続計算 (ルート作成)</option>
+  </select>
+
+  <div id="func1" class="view">
+    <div class="card">
+      <h3>現在地</h3>
+      <div class="input-group"><input type="number" id="f1_x" placeholder="X座標"><input type="number" id="f1_y" placeholder="Y座標"></div>
+      <h3>目標への諸元</h3>
+      <div class="input-group"><input type="number" id="f1_az" placeholder="方位角(mil)"><input type="number" id="f1_dist" placeholder="距離(m)"></div>
+    </div>
+    <button onclick="calcF1()">計算実行</button>
+    <div id="res1" class="result hidden"></div>
+  </div>
+
+  <div id="func2" class="view hidden">
+    <div class="card">
+      <h3>現在地</h3>
+      <div class="input-group"><input type="number" id="f2_sx" placeholder="X座標"><input type="number" id="f2_sy" placeholder="Y座標"></div>
+      <h3>目標地</h3>
+      <div class="input-group"><input type="number" id="f2_ex" placeholder="X座標"><input type="number" id="f2_ey" placeholder="Y座標"></div>
+    </div>
+    <button onclick="calcF2()">計算実行</button>
+    <div id="res2" class="result hidden"></div>
+  </div>
+
+  <div id="func3" class="view hidden">
+    <div class="card">
+      <h3>観測点-1</h3>
+      <div class="input-group"><input type="number" id="f3_p1x" placeholder="X座標"><input type="number" id="f3_p1y" placeholder="Y座標"></div>
+      <input type="number" id="f3_az1" placeholder="方位角-1 (mil)" style="width:100%; padding:10px; box-sizing:border-box; border:1px solid #ccc; border-radius:5px;">
+    </div>
+    <div class="card">
+      <h3>観測点-2</h3>
+      <div class="input-group"><input type="number" id="f3_p2x" placeholder="X座標"><input type="number" id="f3_p2y" placeholder="Y座標"></div>
+      <input type="number" id="f3_az2" placeholder="方位角-2 (mil)" style="width:100%; padding:10px; box-sizing:border-box; border:1px solid #ccc; border-radius:5px;">
+    </div>
+    <button onclick="calcF3()">計算実行</button>
+    <div id="res3" class="result hidden"></div>
+  </div>
+
+  <div id="func4" class="view hidden">
+    <div class="card">
+      <h3>開始点</h3>
+      <div class="input-group"><input type="number" id="f4_x" placeholder="X座標"><input type="number" id="f4_y" placeholder="Y座標"></div>
+      <h3>移動リスト</h3>
+      <div id="routeList">
+        <div class="route-row"><input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"></div>
+      </div>
+      <button onclick="addRouteRow()" style="background-color: #34c759; margin-top:10px;">＋ 移動を追加</button>
+    </div>
+    <button onclick="calcF4()">計算実行</button>
+    <div id="res4" class="result hidden" style="text-align: left; font-size:16px;"></div>
+  </div>
+</div>
+
+<script>
+  // Service Workerの登録 (PWAの要)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+  }
+
+  const MILS_CIRCLE = 6400.0;
+
+  // フォーマット関数 (5桁 / 4桁)
+  const pad5 = (num) => String(Math.round(num)).padStart(5, '0');
+  const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
+
+  function switchView() {
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.getElementById(document.getElementById('menu').value).classList.remove('hidden');
+  }
+
+  function calcF1() {
+    let x = Number(document.getElementById('f1_x').value);
+    let y = Number(document.getElementById('f1_y').value);
+    let az = Number(document.getElementById('f1_az').value);
+    let dist = Number(document.getElementById('f1_dist').value);
+    
+    let rad = az * (2 * Math.PI / MILS_CIRCLE);
+    let targetX = x + dist * Math.sin(rad);
+    let targetY = y + dist * Math.cos(rad);
+    
+    let res = document.getElementById('res1');
+    res.innerHTML = `目標座標<br>X: ${pad5(targetX)}  Y: ${pad5(targetY)}`;
+    res.classList.remove('hidden');
+  }
+
+  function calcF2() {
+    let sx = Number(document.getElementById('f2_sx').value);
+    let sy = Number(document.getElementById('f2_sy').value);
+    let ex = Number(document.getElementById('f2_ex').value);
+    let ey = Number(document.getElementById('f2_ey').value);
+    
+    let dx = ex - sx;
+    let dy = ey - sy;
+    if (dx < -50000) dx += 100000;
+    else if (dx > 50000) dx -= 100000;
+    
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    let rad = Math.atan2(dx, dy);
+    let mil = rad * (MILS_CIRCLE / (2 * Math.PI));
+    if (mil < 0) mil += MILS_CIRCLE;
+    
+    let res = document.getElementById('res2');
+    res.innerHTML = `方位角: ${pad4(mil)}<br>距離: ${Math.round(dist)} m`;
+    res.classList.remove('hidden');
+  }
+
+  function calcF3() {
+    let p1x = Number(document.getElementById('f3_p1x').value);
+    let p1y = Number(document.getElementById('f3_p1y').value);
+    let az1 = Number(document.getElementById('f3_az1').value);
+    let p2x = Number(document.getElementById('f3_p2x').value);
+    let p2y = Number(document.getElementById('f3_p2y').value);
+    let az2 = Number(document.getElementById('f3_az2').value);
+    
+    let rad1 = az1 * (2 * Math.PI / MILS_CIRCLE);
+    let rad2 = az2 * (2 * Math.PI / MILS_CIRCLE);
+    let tan1 = Math.tan(Math.PI/2 - rad1);
+    let tan2 = Math.tan(Math.PI/2 - rad2);
+    
+    let res = document.getElementById('res3');
+    if (Math.abs(tan1 - tan2) < 0.0001) {
+      res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
+    } else {
+      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2);
+      let intY = tan1 * (intX - p1x) + p1y;
+      res.innerHTML = `交点座標<br>X: ${pad5(intX)}  Y: ${pad5(intY)}`;
+    }
+    res.classList.remove('hidden');
+  }
+
+  function addRouteRow() {
+    let row = document.createElement('div');
+    row.className = 'route-row';
+    row.innerHTML = `<input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`;
+    document.getElementById('routeList').appendChild(row);
+  }
+
+  function calcF4() {
+    let cx = Number(document.getElementById('f4_x').value);
+    let cy = Number(document.getElementById('f4_y').value);
+    let azInputs = document.querySelectorAll('.r_az');
+    let distInputs = document.querySelectorAll('.r_dist');
+    
+    let html = `始: X:${pad5(cx)} Y:${pad5(cy)}<br>`;
+    
+    for (let i = 0; i < azInputs.length; i++) {
+      let az = Number(azInputs[i].value);
+      let dist = Number(distInputs[i].value);
+      if (azInputs[i].value === "" || distInputs[i].value === "") continue;
+      
+      let rad = az * (2 * Math.PI / MILS_CIRCLE);
+      cx = cx + dist * Math.sin(rad);
+      cy = cy + dist * Math.cos(rad);
+      html += `${i+1}: X:${pad5(cx)} Y:${pad5(cy)}<br>`;
+    }
+    
+    let res = document.getElementById('res4');
+    res.innerHTML = html;
+    res.classList.remove('hidden');
+  }
+</script>
+</body>
+</html>
