@@ -160,7 +160,7 @@
       <button class="btn-green" onclick="addRouteRow()" style="margin-top:10px;">＋ 移動を追加</button>
     </div>
     <button onclick="calcF5()">計算実行</button>
-    <div id="res5" class="result hidden" style="text-align: left; font-size:16px;"></div>
+    <div id="res5" class="result hidden"></div>
   </div>
 
   <div id="func6" class="view hidden">
@@ -254,6 +254,7 @@
     return { mil: mil, dist: dist };
   }
 
+  // 標準のクイックセーブUI (機能2, 3, 4用)
   function getSaveUI(inputId, x, y) {
     return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
               <div class="color-select-row" style="margin-bottom:10px;">
@@ -342,19 +343,53 @@
     document.getElementById('routeList').appendChild(row);
   }
 
+  // ★トラバース計算専用のセーブUI生成
+  const getCompactSaveUI = (id, label, x, y) => {
+    return `<div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color); text-align: left;">
+              <div style="font-family: monospace; font-size: 16px; margin-bottom: 8px;">${label}: E:${pad5(x)} N:${pad5(y)}</div>
+              <div class="quick-save" style="margin-top: 5px;">
+                <input type="text" id="${id}" placeholder="${label}の名称">
+                <button onclick="quickSaveTraverse('${id}', ${x}, ${y})">登録</button>
+              </div>
+            </div>`;
+  };
+
+  // ★トラバース計算専用の保存処理（共通カラーを使用）
+  function quickSaveTraverse(inputId, x, y) {
+    let name = document.getElementById(inputId).value;
+    let colorInput = document.getElementById('f5_color');
+    let color = colorInput ? colorInput.value : lastColor;
+    if (!name) { alert("名称を入力してください"); return; }
+    syncColorPickers(color);
+    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    alert(name + " を登録しました！");
+    document.getElementById(inputId).value = "";
+    updateSavedList(); updateMapDropdowns();
+  }
+
+  // ★トラバース計算の改修
   function calcF5() {
     let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value);
     if(cx===null || cy===null) return;
     let azInputs = document.querySelectorAll('.r_az'); let distInputs = document.querySelectorAll('.r_dist');
-    let html = `始: E:${pad5(cx)} N:${pad5(cy)}<br>`;
+    
+    // 全体共通のカラーピッカー
+    let html = `<div class="color-select-row" style="margin-bottom:15px; padding-bottom: 10px;">
+                  <span style="font-size: 14px;">一括マップ表示色</span>
+                  <input type="color" id="f5_color" class="color-picker" onchange="syncColorPickers(this.value)">
+                </div>`;
+                
+    html += getCompactSaveUI('qname_f5_0', '始点', cx, cy);
+    
     for (let i = 0; i < azInputs.length; i++) {
       let az = Number(azInputs[i].value); let dist = Number(distInputs[i].value);
       if (azInputs[i].value === "" || distInputs[i].value === "") continue;
       let rad = az * (2 * Math.PI / MILS_CIRCLE);
       cx = cx + dist * Math.sin(rad); cy = cy + dist * Math.cos(rad);
-      html += `${i+1}: E:${pad5(cx)} N:${pad5(cy)}<br>`;
+      html += getCompactSaveUI(`qname_f5_${i+1}`, `経由点${i+1}`, cx, cy);
     }
-    html += getSaveUI('qname_f5', cx, cy);
+    
     let res = document.getElementById('res5'); res.innerHTML = html; res.classList.remove('hidden');
     syncColorPickers();
   }
@@ -437,7 +472,7 @@
     updateMapDropdowns();
   });
 
-  // ========== ★マップ描画の「またぎ」修正 ==========
+  // ========== マップ描画の処理 ==========
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
 
@@ -480,7 +515,6 @@
       ctx.fillText("座標が登録されていません", w/2, h/2); return;
     }
 
-    // 境界またぎ(0-99000等)を考慮するため、最初の点を基準(原点)とした相対距離で計算する
     if (resetView) {
       mapState.refE = savedPoints[0].e;
       mapState.refN = savedPoints[0].n;
@@ -496,7 +530,6 @@
         if (dy < minDy) minDy = dy; if (dy > maxDy) maxDy = dy;
       });
 
-      // 表示範囲が狭すぎる場合は2km四方に拡張
       if (maxDx - minDx < 2000) { let mid = (maxDx + minDx)/2; minDx = mid - 1000; maxDx = mid + 1000; }
       if (maxDy - minDy < 2000) { let mid = (maxDy + minDy)/2; minDy = mid - 1000; maxDy = mid + 1000; }
       
@@ -507,7 +540,6 @@
       mapState.x = 0; mapState.y = 0; mapState.scale = 1;
     }
 
-    // 描画用の座標変換関数 (相対距離をピクセルに変換)
     let getX = (e) => {
       let dx = e - mapState.refE;
       if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
@@ -519,7 +551,6 @@
       return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y;
     };
 
-    // グリッド線用の絶対座標→ピクセル変換
     let getX_real = (e_real) => {
       let dx = e_real - mapState.refE;
       return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x;
@@ -529,14 +560,13 @@
       return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y;
     };
 
-    // 画面に映る相対距離(Dx, Dy)の範囲を逆算
     let screenToDx = (X) => mapState.minDx + ((X - mapState.x) / mapState.scale - mapState.padding) / mapState.baseScale;
     let screenToDy = (Y) => mapState.minDy + ((h - mapState.padding - (Y - mapState.y) / mapState.scale)) / mapState.baseScale;
     
     let startDx = screenToDx(0) - 1000;
     let endDx = screenToDx(w) + 1000;
-    let endDy = screenToDy(0) + 1000; // 画面上端
-    let startDy = screenToDy(h) - 1000; // 画面下端
+    let endDy = screenToDy(0) + 1000; 
+    let startDy = screenToDy(h) - 1000; 
 
     if(startDy > endDy) { let tmp = startDy; startDy = endDy; endDy = tmp; }
     if(startDx > endDx) { let tmp = startDx; startDx = endDx; endDx = tmp; }
@@ -548,7 +578,6 @@
 
     ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
     
-    // グリッド線の描画
     ctx.textAlign = "center";
     for(let e = startE_real; e <= endE_real; e += 1000) {
       let x = getX_real(e);
