@@ -65,7 +65,6 @@
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); }
     .hidden { display: none; }
 
-    /* カラー選択とクイックセーブUI */
     .color-select-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px; }
     .color-select-row span { font-size: 16px; font-weight: bold; color: var(--text-color); }
     .color-picker { width: 44px; height: 44px; padding: 0; border: none; border-radius: 5px; background: none; cursor: pointer; flex-shrink: 0; }
@@ -74,7 +73,6 @@
     .quick-save input[type="text"] { padding: 10px; border-radius: 5px; font-size: 16px; flex: 1; font-family: sans-serif; }
     .quick-save button { width: auto; margin: 0; padding: 10px 15px; background-color: #34c759; font-size: 14px; flex-shrink: 0; }
 
-    /* リスト表示用 (スライド並び替え対応) */
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--list-border); transition: background-color 0.2s; background-color: var(--card-bg); }
     .list-item:last-child { border-bottom: none; }
     .list-item.dragging { background-color: var(--result-bg); opacity: 0.8; box-shadow: inset 0 0 8px rgba(0,0,0,0.1); }
@@ -83,7 +81,6 @@
     .list-item div.content { font-size: 14px; flex: 1; margin-left: 5px; pointer-events: none; }
     .list-item .delete-btn { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
 
-    /* マップ用 */
     .map-container { position: relative; width: 100%; }
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; }
   </style>
@@ -257,7 +254,6 @@
     return { mil: mil, dist: dist };
   }
 
-  // クイックセーブUI (左右配置に変更)
   function getSaveUI(inputId, x, y) {
     return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
               <div class="color-select-row" style="margin-bottom:10px;">
@@ -400,14 +396,13 @@
     document.getElementById('savedList').innerHTML = html;
   }
 
-  // ========== ドラッグ＆ドロップ (スライド並び替え) 処理 ==========
   const listContainer = document.getElementById('savedList');
   let dragEl = null;
 
   listContainer.addEventListener('touchstart', function(e) {
     const handle = e.target.closest('.drag-handle');
     if (!handle) return;
-    e.preventDefault(); // スクロールを防止して掴む
+    e.preventDefault(); 
     dragEl = handle.closest('.list-item');
     dragEl.classList.add('dragging');
   }, {passive: false});
@@ -419,11 +414,8 @@
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     if (!target) return;
     const targetItem = target.closest('.list-item');
-
-    // 重なった要素が自分以外なら、位置を入れ替える
     if (targetItem && targetItem !== dragEl) {
       const rect = targetItem.getBoundingClientRect();
-      // 指が要素の半分より下に行ったら、その後ろに挿入
       const isNext = (touch.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
       targetItem.parentNode.insertBefore(dragEl, isNext ? targetItem.nextSibling : targetItem);
     }
@@ -433,8 +425,6 @@
     if (!dragEl) return;
     dragEl.classList.remove('dragging');
     dragEl = null;
-
-    // DOMの順番から配列を再構築してセーブ
     const items = document.querySelectorAll('#savedList .list-item');
     let newArray = [];
     items.forEach(item => {
@@ -447,8 +437,8 @@
     updateMapDropdowns();
   });
 
-  // ========== マップの描画とタッチ操作 ==========
-  let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, minE: 0, minN: 0, padding: 30 };
+  // ========== ★マップ描画の「またぎ」修正 ==========
+  let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
 
   function updateMapDropdowns() {
@@ -490,33 +480,86 @@
       ctx.fillText("座標が登録されていません", w/2, h/2); return;
     }
 
+    // 境界またぎ(0-99000等)を考慮するため、最初の点を基準(原点)とした相対距離で計算する
     if (resetView) {
-      let maxE = Math.max(...savedPoints.map(p => p.e)); mapState.minE = Math.min(...savedPoints.map(p => p.e));
-      let maxN = Math.max(...savedPoints.map(p => p.n)); mapState.minN = Math.min(...savedPoints.map(p => p.n));
-      if (maxE - mapState.minE < 2000) { let mid = (maxE + mapState.minE)/2; mapState.minE = mid - 1000; maxE = mid + 1000; }
-      if (maxN - mapState.minN < 2000) { let mid = (maxN + mapState.minN)/2; mapState.minN = mid - 1000; maxN = mid + 1000; }
-      mapState.baseScale = Math.min((w - mapState.padding*2) / (maxE - mapState.minE), (h - mapState.padding*2) / (maxN - mapState.minN));
+      mapState.refE = savedPoints[0].e;
+      mapState.refN = savedPoints[0].n;
+      
+      let minDx = 0, maxDx = 0, minDy = 0, maxDy = 0;
+      savedPoints.forEach(p => {
+        let dx = p.e - mapState.refE;
+        if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
+        let dy = p.n - mapState.refN;
+        if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000;
+        
+        if (dx < minDx) minDx = dx; if (dx > maxDx) maxDx = dx;
+        if (dy < minDy) minDy = dy; if (dy > maxDy) maxDy = dy;
+      });
+
+      // 表示範囲が狭すぎる場合は2km四方に拡張
+      if (maxDx - minDx < 2000) { let mid = (maxDx + minDx)/2; minDx = mid - 1000; maxDx = mid + 1000; }
+      if (maxDy - minDy < 2000) { let mid = (maxDy + minDy)/2; minDy = mid - 1000; maxDy = mid + 1000; }
+      
+      mapState.minDx = minDx; mapState.maxDx = maxDx;
+      mapState.minDy = minDy; mapState.maxDy = maxDy;
+
+      mapState.baseScale = Math.min((w - mapState.padding*2) / (maxDx - minDx), (h - mapState.padding*2) / (maxDy - minDy));
       mapState.x = 0; mapState.y = 0; mapState.scale = 1;
     }
 
-    let getX = (e) => (mapState.padding + (e - mapState.minE) * mapState.baseScale) * mapState.scale + mapState.x;
-    let getY = (n) => (h - mapState.padding - (n - mapState.minN) * mapState.baseScale) * mapState.scale + mapState.y;
+    // 描画用の座標変換関数 (相対距離をピクセルに変換)
+    let getX = (e) => {
+      let dx = e - mapState.refE;
+      if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
+      return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x;
+    };
+    let getY = (n) => {
+      let dy = n - mapState.refN;
+      if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000;
+      return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y;
+    };
+
+    // グリッド線用の絶対座標→ピクセル変換
+    let getX_real = (e_real) => {
+      let dx = e_real - mapState.refE;
+      return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x;
+    };
+    let getY_real = (n_real) => {
+      let dy = n_real - mapState.refN;
+      return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y;
+    };
+
+    // 画面に映る相対距離(Dx, Dy)の範囲を逆算
+    let screenToDx = (X) => mapState.minDx + ((X - mapState.x) / mapState.scale - mapState.padding) / mapState.baseScale;
+    let screenToDy = (Y) => mapState.minDy + ((h - mapState.padding - (Y - mapState.y) / mapState.scale)) / mapState.baseScale;
+    
+    let startDx = screenToDx(0) - 1000;
+    let endDx = screenToDx(w) + 1000;
+    let endDy = screenToDy(0) + 1000; // 画面上端
+    let startDy = screenToDy(h) - 1000; // 画面下端
+
+    if(startDy > endDy) { let tmp = startDy; startDy = endDy; endDy = tmp; }
+    if(startDx > endDx) { let tmp = startDx; startDx = endDx; endDx = tmp; }
+
+    let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000;
+    let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
+    let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000;
+    let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
 
     ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
-    let startE = Math.floor(mapState.minE / 1000) * 1000 - 10000; let endE = mapState.minE + (w / mapState.baseScale / mapState.scale) + 10000;
-    let startN = Math.floor(mapState.minN / 1000) * 1000 - 10000; let endN = mapState.minN + (h / mapState.baseScale / mapState.scale) + 10000;
-
+    
+    // グリッド線の描画
     ctx.textAlign = "center";
-    for(let e = startE; e <= endE; e += 1000) {
-      let x = getX(e);
+    for(let e = startE_real; e <= endE_real; e += 1000) {
+      let x = getX_real(e);
       if(x > -50 && x < w + 50) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
         ctx.fillText(pad5(e).substring(0,2), x, h - 5);
       }
     }
     ctx.textAlign = "left";
-    for(let n = startN; n <= endN; n += 1000) {
-      let y = getY(n);
+    for(let n = startN_real; n <= endN_real; n += 1000) {
+      let y = getY_real(n);
       if(y > -50 && y < h + 50) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
         ctx.fillText(pad5(n).substring(0,2), 5, y + 3);
