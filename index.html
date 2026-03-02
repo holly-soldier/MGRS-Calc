@@ -62,10 +62,11 @@
     button:active { background-color: #005bb5; }
     button.btn-green { background-color: #34c759; }
     button.btn-gray { background-color: #8e8e93; }
+    button.btn-red { background-color: #ff3b30; }
     button.btn-small { padding: 10px; font-size: 14px; margin-bottom: 10px;}
     
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); }
-    .hidden { display: none; }
+    .hidden { display: none !important; }
 
     .color-select-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px; }
     .color-select-row span { font-size: 16px; font-weight: bold; color: var(--text-color); }
@@ -81,7 +82,8 @@
     
     .drag-handle { padding: 10px 15px 10px 5px; font-size: 24px; color: #888; font-weight: bold; touch-action: none; cursor: grab; }
     .list-item div.content { font-size: 14px; flex: 1; margin-left: 5px; pointer-events: none; }
-    .list-item .delete-btn { width: auto; padding: 8px 12px; margin: 0; font-size: 14px; background-color: #ff3b30; }
+    .action-btns { display: flex; gap: 5px; margin-right: 5px; }
+    .action-btns button { width: auto; padding: 8px 12px; margin: 0; font-size: 12px; border-radius: 5px; }
 
     .map-container { position: relative; width: 100%; }
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; }
@@ -166,19 +168,19 @@
   </div>
 
   <div id="func6" class="view hidden">
-    
     <div class="card">
       <h3>テキストで一括入出力</h3>
-      <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 色（スペース区切り）<br>例: T1 00700 04245 赤</p>
+      <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 色（スペース区切り）<br>※同名の座標が存在する場合は自動で上書きされます。</p>
       <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
       <div style="display:flex; gap:10px;">
-        <button class="btn-green btn-small" onclick="importPoints()" style="margin:0;">↓ 読み込み</button>
-        <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0;">↑ 書き出し</button>
+        <button class="btn-green btn-small" onclick="importPoints()" style="margin:0; flex:1;">↓ 読み込み</button>
+        <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0; flex:1;">↑ 書き出し</button>
+        <button class="btn-red btn-small" onclick="deleteAllPoints()" style="margin:0; flex:1;">一括削除</button>
       </div>
     </div>
 
-    <div class="card">
-      <h3>座標を手動登録</h3>
+    <div id="edit_card" class="card">
+      <h3 id="edit_title">座標を手動登録</h3>
       <div class="color-select-row">
         <span>マップ表示色</span>
         <input type="color" id="f6_color" class="color-picker">
@@ -188,12 +190,22 @@
         <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標">
         <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標">
       </div>
-      <button class="btn-green" onclick="savePointManual()">登録</button>
+      <div style="display:flex; gap:10px;">
+        <button id="btn_manual_save" class="btn-green" onclick="savePointManual()" style="margin-bottom:0;">登録</button>
+        <button id="btn_manual_cancel" class="btn-gray hidden" onclick="cancelEdit()" style="margin-bottom:0; width:40%;">キャンセル</button>
+      </div>
     </div>
 
     <div class="card">
-      <h3>登録済み座標一覧</h3>
-      <p style="font-size:12px; margin-top:0; opacity:0.7;">※「≡」を長押しして上下にスライドで並び替え</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">登録済み座標</h3>
+        <select id="sort_select" style="width:auto; padding:5px 10px; font-size:14px; margin:0; border-radius:5px;" onchange="applySort()">
+          <option value="manual">手動(≡)</option>
+          <option value="name_asc">名前順</option>
+          <option value="e_asc">E座標(西→東)</option>
+          <option value="n_asc">N座標(南→北)</option>
+        </select>
+      </div>
       <div id="savedList"></div>
     </div>
   </div>
@@ -226,6 +238,7 @@
   const MILS_CIRCLE = 6400.0;
   let savedPoints = JSON.parse(localStorage.getItem('mgrsPoints') || '[]');
   let lastColor = localStorage.getItem('mgrsLastColor') || '#ff3b30';
+  let editingId = null; // ★編集モード用のフラグ
 
   const parseCoord = (val) => {
     if (val === "" || val === null || val === undefined) return null;
@@ -240,74 +253,22 @@
   };
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
-  // ★NEW: テキストの「色名」をコードに変換する関数
   function parseColorStr(c) {
     if (!c) return lastColor;
     let m = c.trim().toLowerCase();
     const cmap = {
-      '赤': '#ff3b30', 'red': '#ff3b30',
-      '青': '#007aff', 'blue': '#007aff',
-      '緑': '#34c759', 'green': '#34c759',
-      '黄': '#ffcc00', 'yellow': '#ffcc00',
-      '黒': '#000000', 'black': '#000000',
-      '白': '#ffffff', 'white': '#ffffff',
-      '紫': '#af52de', 'purple': '#af52de',
-      '橙': '#ff9500', 'orange': '#ff9500',
-      'オレンジ': '#ff9500'
+      '赤': '#ff3b30', 'red': '#ff3b30', '青': '#007aff', 'blue': '#007aff',
+      '緑': '#34c759', 'green': '#34c759', '黄': '#ffcc00', 'yellow': '#ffcc00',
+      '黒': '#000000', 'black': '#000000', '白': '#ffffff', 'white': '#ffffff',
+      '紫': '#af52de', 'purple': '#af52de', '橙': '#ff9500', 'orange': '#ff9500'
     };
     if (cmap[m]) return cmap[m];
-    // 色コード(#ff0000など)であればそのまま返す
     if (m.startsWith('#') && (m.length === 4 || m.length === 7)) return m;
-    return lastColor; // 判別不能なら前回の色
-  }
-
-  // ★NEW: テキストから読み込み
-  function importPoints() {
-    let text = document.getElementById('io_text').value;
-    if (!text.trim()) { alert("テキストを入力してください。"); return; }
-    
-    let lines = text.split('\n');
-    let count = 0;
-    for (let line of lines) {
-       // スペースまたはタブで分割
-       let parts = line.trim().split(/[\s\t]+/);
-       if (parts.length >= 3) {
-          let name = parts[0];
-          let e = parseCoord(parts[1]);
-          let n = parseCoord(parts[2]);
-          if (e !== null && n !== null) {
-             let color = parts.length >= 4 ? parseColorStr(parts[3]) : lastColor;
-             // idは重複を避けるためにランダム要素を付与
-             savedPoints.push({ id: Date.now() + Math.floor(Math.random()*1000), name: name, e: e, n: n, color: color });
-             count++;
-          }
-       }
-    }
-    
-    if (count > 0) {
-       localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-       updateSavedList();
-       drawMap(null, null, true);
-       alert(`${count}件の座標を読み込みました！`);
-       document.getElementById('io_text').value = ""; // 成功したらクリア
-    } else {
-       alert("読み込める座標がありませんでした。\n【書式】名称 E座標 N座標 色");
-    }
-  }
-
-  // ★NEW: テキストへ書き出し
-  function exportPoints() {
-    if (savedPoints.length === 0) { alert("書き出すデータがありません。"); return; }
-    // 書き出す時は正確な色コード(#xxxxxx)で出力
-    let out = savedPoints.map(p => `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.color || '#ff3b30'}`).join('\n');
-    document.getElementById('io_text').value = out;
+    return lastColor;
   }
 
   function syncColorPickers(newColor) {
-    if(newColor) {
-      lastColor = newColor;
-      localStorage.setItem('mgrsLastColor', lastColor);
-    }
+    if(newColor) { lastColor = newColor; localStorage.setItem('mgrsLastColor', lastColor); }
     document.querySelectorAll('.color-picker').forEach(el => { el.value = lastColor; });
   }
 
@@ -331,6 +292,7 @@
     return { mil: mil, dist: dist };
   }
 
+  // クイックセーブ (同名なら自動上書き)
   function getSaveUI(inputId, x, y) {
     return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
               <div class="color-select-row" style="margin-bottom:10px;">
@@ -349,14 +311,25 @@
     let colorInput = document.getElementById(inputId + '_color');
     let color = colorInput ? colorInput.value : lastColor;
     if (!name) { alert("名称を入力してください"); return; }
+    
     syncColorPickers(color);
-    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
+    
+    // 同名なら上書き
+    let existing = savedPoints.find(p => p.name === name);
+    if(existing) {
+        existing.e = Number(x); existing.n = Number(y); existing.color = color;
+        alert(name + " を上書き登録しました！");
+    } else {
+        savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
+        alert(name + " を登録しました！");
+    }
+    
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    alert(name + " を登録しました！");
     document.getElementById(inputId).value = "";
     updateSavedList(); updateMapDropdowns();
   }
 
+  // 機能1〜5の計算ロジック
   function calcF1() {
     let sx = parseCoord(document.getElementById('f1_sx').value); let sy = parseCoord(document.getElementById('f1_sy').value);
     let ex = parseCoord(document.getElementById('f1_ex').value); let ey = parseCoord(document.getElementById('f1_ey').value);
@@ -375,8 +348,7 @@
     let targetX = x + dist * Math.sin(rad); let targetY = y + dist * Math.cos(rad);
     let res = document.getElementById('res2');
     res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}` + getSaveUI('qname_f2', targetX, targetY);
-    res.classList.remove('hidden');
-    syncColorPickers();
+    res.classList.remove('hidden'); syncColorPickers();
   }
 
   function calcF3() {
@@ -391,8 +363,7 @@
       let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y;
       res.innerHTML = `交点座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f3', intX, intY);
     }
-    res.classList.remove('hidden');
-    syncColorPickers();
+    res.classList.remove('hidden'); syncColorPickers();
   }
 
   function calcF4() {
@@ -408,8 +379,7 @@
       let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y;
       res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY);
     }
-    res.classList.remove('hidden');
-    syncColorPickers();
+    res.classList.remove('hidden'); syncColorPickers();
   }
 
   function addRouteRow() {
@@ -434,9 +404,17 @@
     let color = colorInput ? colorInput.value : lastColor;
     if (!name) { alert("名称を入力してください"); return; }
     syncColorPickers(color);
-    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
+    
+    let existing = savedPoints.find(p => p.name === name);
+    if(existing) {
+        existing.e = Number(x); existing.n = Number(y); existing.color = color;
+        alert(name + " を上書き登録しました！");
+    } else {
+        savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
+        alert(name + " を登録しました！");
+    }
+    
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    alert(name + " を登録しました！");
     document.getElementById(inputId).value = "";
     updateSavedList(); updateMapDropdowns();
   }
@@ -445,14 +423,11 @@
     let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value);
     if(cx===null || cy===null) return;
     let azInputs = document.querySelectorAll('.r_az'); let distInputs = document.querySelectorAll('.r_dist');
-    
     let html = `<div class="color-select-row" style="margin-bottom:15px; padding-bottom: 10px;">
                   <span style="font-size: 14px;">一括マップ表示色</span>
                   <input type="color" id="f5_color" class="color-picker" onchange="syncColorPickers(this.value)">
                 </div>`;
-                
     html += getCompactSaveUI('qname_f5_0', '始点', cx, cy);
-    
     for (let i = 0; i < azInputs.length; i++) {
       let az = Number(azInputs[i].value); let dist = Number(distInputs[i].value);
       if (azInputs[i].value === "" || distInputs[i].value === "") continue;
@@ -460,22 +435,120 @@
       cx = cx + dist * Math.sin(rad); cy = cy + dist * Math.cos(rad);
       html += getCompactSaveUI(`qname_f5_${i+1}`, `経由点${i+1}`, cx, cy);
     }
-    
     let res = document.getElementById('res5'); res.innerHTML = html; res.classList.remove('hidden');
     syncColorPickers();
   }
 
+  // ★テキスト一括入出力 (同名上書き対応)
+  function importPoints() {
+    let text = document.getElementById('io_text').value;
+    if (!text.trim()) { alert("テキストを入力してください。"); return; }
+    let lines = text.split('\n');
+    let addedCount = 0; let updatedCount = 0;
+    
+    for (let line of lines) {
+       let parts = line.trim().split(/[\s\t]+/);
+       if (parts.length >= 3) {
+          let name = parts[0]; let e = parseCoord(parts[1]); let n = parseCoord(parts[2]);
+          if (e !== null && n !== null) {
+             let color = parts.length >= 4 ? parseColorStr(parts[3]) : lastColor;
+             let existing = savedPoints.find(p => p.name === name);
+             if (existing) {
+                 existing.e = e; existing.n = n; existing.color = color;
+                 updatedCount++;
+             } else {
+                 savedPoints.push({ id: Date.now() + Math.floor(Math.random()*1000), name: name, e: e, n: n, color: color });
+                 addedCount++;
+             }
+          }
+       }
+    }
+    if (addedCount > 0 || updatedCount > 0) {
+       localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+       updateSavedList(); drawMap(null, null, true);
+       alert(`${addedCount}件を新規追加、${updatedCount}件を上書きしました！`);
+       document.getElementById('io_text').value = "";
+    } else { alert("読み込める座標がありませんでした。\n【書式】名称 E座標 N座標 色"); }
+  }
+
+  function exportPoints() {
+    if (savedPoints.length === 0) { alert("書き出すデータがありません。"); return; }
+    let out = savedPoints.map(p => `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.color || '#ff3b30'}`).join('\n');
+    document.getElementById('io_text').value = out;
+  }
+
+  // ★全件削除アラート
+  function deleteAllPoints() {
+    if (savedPoints.length === 0) return;
+    if (confirm("本当にすべての登録座標を削除しますか？\n（この操作は元に戻せません）")) {
+       savedPoints = [];
+       localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+       updateSavedList(); drawMap(null, null, true);
+       alert("すべての座標を削除しました。");
+    }
+  }
+
+  // ★編集と手動登録ロジック
   document.getElementById('f6_color').addEventListener('change', function(e) { syncColorPickers(e.target.value); });
+
+  function editPoint(id) {
+    let p = savedPoints.find(p => p.id === id);
+    if (!p) return;
+    editingId = id;
+    document.getElementById('edit_title').innerText = "座標を編集する";
+    document.getElementById('f6_name').value = p.name;
+    document.getElementById('f6_x').value = pad5(p.e);
+    document.getElementById('f6_y').value = pad5(p.n);
+    document.getElementById('f6_color').value = p.color || lastColor;
+    
+    document.getElementById('btn_manual_save').innerText = "更新";
+    document.getElementById('btn_manual_cancel').classList.remove('hidden');
+    
+    document.getElementById('edit_card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function cancelEdit() {
+    editingId = null;
+    document.getElementById('edit_title').innerText = "座標を手動登録";
+    document.getElementById('f6_name').value = "";
+    document.getElementById('f6_x').value = "";
+    document.getElementById('f6_y').value = "";
+    document.getElementById('btn_manual_save').innerText = "登録";
+    document.getElementById('btn_manual_cancel').classList.add('hidden');
+  }
 
   function savePointManual() {
     let name = document.getElementById('f6_name').value;
     let x = parseCoord(document.getElementById('f6_x').value); let y = parseCoord(document.getElementById('f6_y').value);
     let color = document.getElementById('f6_color').value;
+    
     if (!name || x === null || y === null) { alert("名称と座標を入力してください"); return; }
     
-    savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), color: color });
+    if (editingId !== null) {
+        // 編集モード
+        let conflict = savedPoints.find(p => p.name === name && p.id !== editingId);
+        if (conflict) {
+            // 名前を変更して別の既存名と被った場合は上書き統合
+            conflict.e = x; conflict.n = y; conflict.color = color;
+            savedPoints = savedPoints.filter(p => p.id !== editingId);
+        } else {
+            let p = savedPoints.find(p => p.id === editingId);
+            if (p) { p.name = name; p.e = x; p.n = y; p.color = color; }
+        }
+        alert(name + " を更新しました！");
+    } else {
+        // 新規登録モード (同名は上書き)
+        let existing = savedPoints.find(p => p.name === name);
+        if (existing) {
+            existing.e = x; existing.n = y; existing.color = color;
+            alert(name + " を上書き登録しました！");
+        } else {
+            savedPoints.push({ id: Date.now(), name: name, e: x, n: y, color: color });
+        }
+    }
+    
+    cancelEdit();
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
-    document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = "";
     updateSavedList(); drawMap(null, null, true);
   }
 
@@ -483,6 +556,23 @@
     savedPoints = savedPoints.filter(p => p.id !== id);
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
     updateSavedList(); drawMap(null, null, true);
+  }
+
+  // ★自動ソート処理
+  function applySort() {
+    let mode = document.getElementById('sort_select').value;
+    if (mode === 'manual') return; // 手動はそのまま（何もしない）
+    
+    if (mode === 'name_asc') {
+       savedPoints.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    } else if (mode === 'e_asc') {
+       savedPoints.sort((a, b) => a.e - b.e);
+    } else if (mode === 'n_asc') {
+       savedPoints.sort((a, b) => a.n - b.n);
+    }
+    
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    updateSavedList();
   }
 
   function updateSavedList() {
@@ -495,12 +585,16 @@
                  <div class="content">
                    <strong><span style="display:inline-block; width:12px; height:12px; background:${pColor}; border-radius:50%; margin-right:5px; vertical-align:middle;"></span>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}
                  </div>
-                 <button class="delete-btn" onclick="deletePoint(${p.id})">削除</button>
+                 <div class="action-btns">
+                   <button class="btn-gray" onclick="editPoint(${p.id})">編集</button>
+                   <button class="btn-red" onclick="deletePoint(${p.id})">削除</button>
+                 </div>
                </div>`;
     });
     document.getElementById('savedList').innerHTML = html;
   }
 
+  // ドラッグ＆ドロップ
   const listContainer = document.getElementById('savedList');
   let dragEl = null;
 
@@ -539,10 +633,14 @@
     });
     savedPoints = newArray;
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+    
+    // スライド操作をしたので、ソートメニューを「手動」に戻す
+    document.getElementById('sort_select').value = 'manual';
+    
     updateMapDropdowns();
   });
 
-  // ========== マップ描画の処理 ==========
+  // ========== マップ描画 ==========
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
 
@@ -564,9 +662,7 @@
     drawMap(currentP1, currentP2, false);
   }
 
-  function resetMapView() {
-    drawMap(currentP1, currentP2, true);
-  }
+  function resetMapView() { drawMap(currentP1, currentP2, true); }
 
   function drawMap(highlightP1 = null, highlightP2 = null, resetView = false) {
     let canvas = document.getElementById('mapCanvas'); let ctx = canvas.getContext('2d');
@@ -588,97 +684,48 @@
     if (resetView) {
       mapState.refE = savedPoints[0].e;
       mapState.refN = savedPoints[0].n;
-      
       let minDx = 0, maxDx = 0, minDy = 0, maxDy = 0;
       savedPoints.forEach(p => {
-        let dx = p.e - mapState.refE;
-        if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
-        let dy = p.n - mapState.refN;
-        if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000;
-        
+        let dx = p.e - mapState.refE; if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
+        let dy = p.n - mapState.refN; if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000;
         if (dx < minDx) minDx = dx; if (dx > maxDx) maxDx = dx;
         if (dy < minDy) minDy = dy; if (dy > maxDy) maxDy = dy;
       });
-
       if (maxDx - minDx < 2000) { let mid = (maxDx + minDx)/2; minDx = mid - 1000; maxDx = mid + 1000; }
       if (maxDy - minDy < 2000) { let mid = (maxDy + minDy)/2; minDy = mid - 1000; maxDy = mid + 1000; }
-      
-      mapState.minDx = minDx; mapState.maxDx = maxDx;
-      mapState.minDy = minDy; mapState.maxDy = maxDy;
-
+      mapState.minDx = minDx; mapState.maxDx = maxDx; mapState.minDy = minDy; mapState.maxDy = maxDy;
       mapState.baseScale = Math.min((w - mapState.padding*2) / (maxDx - minDx), (h - mapState.padding*2) / (maxDy - minDy));
       mapState.x = 0; mapState.y = 0; mapState.scale = 1;
     }
 
-    let getX = (e) => {
-      let dx = e - mapState.refE;
-      if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
-      return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x;
-    };
-    let getY = (n) => {
-      let dy = n - mapState.refN;
-      if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000;
-      return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y;
-    };
-
-    let getX_real = (e_real) => {
-      let dx = e_real - mapState.refE;
-      return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x;
-    };
-    let getY_real = (n_real) => {
-      let dy = n_real - mapState.refN;
-      return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y;
-    };
-
+    let getX = (e) => { let dx = e - mapState.refE; if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000; return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x; };
+    let getY = (n) => { let dy = n - mapState.refN; if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000; return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y; };
+    let getX_real = (e_real) => { let dx = e_real - mapState.refE; return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x; };
+    let getY_real = (n_real) => { let dy = n_real - mapState.refN; return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y; };
     let screenToDx = (X) => mapState.minDx + ((X - mapState.x) / mapState.scale - mapState.padding) / mapState.baseScale;
     let screenToDy = (Y) => mapState.minDy + ((h - mapState.padding - (Y - mapState.y) / mapState.scale)) / mapState.baseScale;
     
-    let startDx = screenToDx(0) - 1000;
-    let endDx = screenToDx(w) + 1000;
-    let endDy = screenToDy(0) + 1000; 
-    let startDy = screenToDy(h) - 1000; 
-
+    let startDx = screenToDx(0) - 1000; let endDx = screenToDx(w) + 1000; let endDy = screenToDy(0) + 1000; let startDy = screenToDy(h) - 1000; 
     if(startDy > endDy) { let tmp = startDy; startDy = endDy; endDy = tmp; }
     if(startDx > endDx) { let tmp = startDx; startDx = endDx; endDx = tmp; }
 
-    let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000;
-    let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
-    let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000;
-    let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
+    let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000; let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
+    let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000; let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
 
     ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
     
     ctx.textAlign = "center";
-    for(let e = startE_real; e <= endE_real; e += 1000) {
-      let x = getX_real(e);
-      if(x > -50 && x < w + 50) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-        ctx.fillText(pad5(e).substring(0,2), x, h - 5);
-      }
-    }
+    for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); ctx.fillText(pad5(e).substring(0,2), x, h - 5); } }
     ctx.textAlign = "left";
-    for(let n = startN_real; n <= endN_real; n += 1000) {
-      let y = getY_real(n);
-      if(y > -50 && y < h + 50) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-        ctx.fillText(pad5(n).substring(0,2), 5, y + 3);
-      }
-    }
+    for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); ctx.fillText(pad5(n).substring(0,2), 5, y + 3); } }
 
-    if (highlightP1 && highlightP2) {
-      ctx.strokeStyle = 'rgba(0, 122, 255, 0.7)'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n));
-      ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke();
-    }
+    if (highlightP1 && highlightP2) { ctx.strokeStyle = 'rgba(0, 122, 255, 0.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n)); ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke(); }
 
     savedPoints.forEach(p => {
-      let x = getX(p.e), y = getY(p.n);
-      let pinColor = p.color || '#ff3b30';
+      let x = getX(p.e), y = getY(p.n); let pinColor = p.color || '#ff3b30';
       if(x > -20 && x < w + 20 && y > -20 && y < h + 20) {
-        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
-        ctx.fillStyle = pinColor; ctx.fill();
-        ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = cMainText; ctx.font = "bold 12px sans-serif";
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fillStyle = pinColor; ctx.fill();
+        ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = cMainText; ctx.font = "bold 12px sans-serif";
         ctx.fillText(p.name, x + 10, y + 4);
       }
     });
@@ -687,43 +734,23 @@
   const canvas = document.getElementById('mapCanvas');
   let isDragging = false; let startPan = { x: 0, y: 0 }; let initialPinchDist = null;
 
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if (e.touches.length === 1) {
-      isDragging = true; startPan = { x: e.touches[0].clientX - mapState.x, y: e.touches[0].clientY - mapState.y };
-    } else if (e.touches.length === 2) {
-      isDragging = false; initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-    }
-  }, { passive: false });
-
+  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (e.touches.length === 1) { isDragging = true; startPan = { x: e.touches[0].clientX - mapState.x, y: e.touches[0].clientY - mapState.y }; } else if (e.touches.length === 2) { isDragging = false; initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } }, { passive: false });
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
-    if (e.touches.length === 1 && isDragging) {
-      mapState.x = e.touches[0].clientX - startPan.x; mapState.y = e.touches[0].clientY - startPan.y;
-      requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
-    } else if (e.touches.length === 2 && initialPinchDist) {
+    if (e.touches.length === 1 && isDragging) { mapState.x = e.touches[0].clientX - startPan.x; mapState.y = e.touches[0].clientY - startPan.y; requestAnimationFrame(() => drawMap(currentP1, currentP2, false)); }
+    else if (e.touches.length === 2 && initialPinchDist) {
       const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2; const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      const rect = canvas.getBoundingClientRect();
-      const canvasCenterX = centerX - rect.left; const canvasCenterY = centerY - rect.top;
+      const rect = canvas.getBoundingClientRect(); const canvasCenterX = centerX - rect.left; const canvasCenterY = centerY - rect.top;
       const scaleFactor = newDist / initialPinchDist;
-      mapState.x = canvasCenterX - (canvasCenterX - mapState.x) * scaleFactor;
-      mapState.y = canvasCenterY - (canvasCenterY - mapState.y) * scaleFactor;
-      mapState.scale *= scaleFactor;
-      requestAnimationFrame(() => drawMap(currentP1, currentP2, false));
-      initialPinchDist = newDist;
+      mapState.x = canvasCenterX - (canvasCenterX - mapState.x) * scaleFactor; mapState.y = canvasCenterY - (canvasCenterY - mapState.y) * scaleFactor;
+      mapState.scale *= scaleFactor; requestAnimationFrame(() => drawMap(currentP1, currentP2, false)); initialPinchDist = newDist;
     }
   }, { passive: false });
-
-  canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    if (e.touches.length < 2) initialPinchDist = null;
-    if (e.touches.length === 0) isDragging = false;
-  });
+  canvas.addEventListener('touchend', (e) => { e.preventDefault(); if (e.touches.length < 2) initialPinchDist = null; if (e.touches.length === 0) isDragging = false; });
 
   // 初期化実行
-  updateSavedList();
-  syncColorPickers();
+  updateSavedList(); syncColorPickers();
 </script>
 </body>
 </html>
