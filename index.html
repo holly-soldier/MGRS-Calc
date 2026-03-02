@@ -44,8 +44,9 @@
     header { background-color: #007aff; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
     .container { padding: 15px; }
     
-    select, input[type="text"], input[type="number"] { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); }
+    select, input[type="text"], input[type="number"], textarea { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; }
     select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
+    textarea { width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; border-radius: 5px; resize: vertical; min-height: 120px; margin-bottom: 10px; font-family: monospace; }
     
     .card { background: var(--card-bg); padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; }
     .card h3 { margin-top: 0; font-size: 16px; color: var(--text-color); margin-bottom: 10px; }
@@ -60,7 +61,8 @@
     button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-sizing: border-box; }
     button:active { background-color: #005bb5; }
     button.btn-green { background-color: #34c759; }
-    button.btn-gray { background-color: #8e8e93; padding: 10px; font-size: 14px; margin-top: 10px; margin-bottom: 0;}
+    button.btn-gray { background-color: #8e8e93; }
+    button.btn-small { padding: 10px; font-size: 14px; margin-bottom: 10px;}
     
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); }
     .hidden { display: none; }
@@ -164,6 +166,17 @@
   </div>
 
   <div id="func6" class="view hidden">
+    
+    <div class="card">
+      <h3>テキストで一括入出力</h3>
+      <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 色（スペース区切り）<br>例: T1 00700 04245 赤</p>
+      <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-green btn-small" onclick="importPoints()" style="margin:0;">↓ 読み込み</button>
+        <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0;">↑ 書き出し</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>座標を手動登録</h3>
       <div class="color-select-row">
@@ -177,6 +190,7 @@
       </div>
       <button class="btn-green" onclick="savePointManual()">登録</button>
     </div>
+
     <div class="card">
       <h3>登録済み座標一覧</h3>
       <p style="font-size:12px; margin-top:0; opacity:0.7;">※「≡」を長押しして上下にスライドで並び替え</p>
@@ -191,7 +205,7 @@
       <div class="map-container">
         <canvas id="mapCanvas" width="400" height="400"></canvas>
       </div>
-      <button class="btn-gray" onclick="resetMapView()">視点をリセット</button>
+      <button class="btn-gray btn-small" onclick="resetMapView()" style="margin-top:10px;">視点をリセット</button>
       
       <h3 style="margin-top: 20px;">登録座標から諸元計算</h3>
       <div class="input-group">
@@ -226,6 +240,69 @@
   };
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
+  // ★NEW: テキストの「色名」をコードに変換する関数
+  function parseColorStr(c) {
+    if (!c) return lastColor;
+    let m = c.trim().toLowerCase();
+    const cmap = {
+      '赤': '#ff3b30', 'red': '#ff3b30',
+      '青': '#007aff', 'blue': '#007aff',
+      '緑': '#34c759', 'green': '#34c759',
+      '黄': '#ffcc00', 'yellow': '#ffcc00',
+      '黒': '#000000', 'black': '#000000',
+      '白': '#ffffff', 'white': '#ffffff',
+      '紫': '#af52de', 'purple': '#af52de',
+      '橙': '#ff9500', 'orange': '#ff9500',
+      'オレンジ': '#ff9500'
+    };
+    if (cmap[m]) return cmap[m];
+    // 色コード(#ff0000など)であればそのまま返す
+    if (m.startsWith('#') && (m.length === 4 || m.length === 7)) return m;
+    return lastColor; // 判別不能なら前回の色
+  }
+
+  // ★NEW: テキストから読み込み
+  function importPoints() {
+    let text = document.getElementById('io_text').value;
+    if (!text.trim()) { alert("テキストを入力してください。"); return; }
+    
+    let lines = text.split('\n');
+    let count = 0;
+    for (let line of lines) {
+       // スペースまたはタブで分割
+       let parts = line.trim().split(/[\s\t]+/);
+       if (parts.length >= 3) {
+          let name = parts[0];
+          let e = parseCoord(parts[1]);
+          let n = parseCoord(parts[2]);
+          if (e !== null && n !== null) {
+             let color = parts.length >= 4 ? parseColorStr(parts[3]) : lastColor;
+             // idは重複を避けるためにランダム要素を付与
+             savedPoints.push({ id: Date.now() + Math.floor(Math.random()*1000), name: name, e: e, n: n, color: color });
+             count++;
+          }
+       }
+    }
+    
+    if (count > 0) {
+       localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints));
+       updateSavedList();
+       drawMap(null, null, true);
+       alert(`${count}件の座標を読み込みました！`);
+       document.getElementById('io_text').value = ""; // 成功したらクリア
+    } else {
+       alert("読み込める座標がありませんでした。\n【書式】名称 E座標 N座標 色");
+    }
+  }
+
+  // ★NEW: テキストへ書き出し
+  function exportPoints() {
+    if (savedPoints.length === 0) { alert("書き出すデータがありません。"); return; }
+    // 書き出す時は正確な色コード(#xxxxxx)で出力
+    let out = savedPoints.map(p => `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.color || '#ff3b30'}`).join('\n');
+    document.getElementById('io_text').value = out;
+  }
+
   function syncColorPickers(newColor) {
     if(newColor) {
       lastColor = newColor;
@@ -254,7 +331,6 @@
     return { mil: mil, dist: dist };
   }
 
-  // 標準のクイックセーブUI (機能2, 3, 4用)
   function getSaveUI(inputId, x, y) {
     return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
               <div class="color-select-row" style="margin-bottom:10px;">
@@ -281,7 +357,6 @@
     updateSavedList(); updateMapDropdowns();
   }
 
-  // --- 各機能の計算 ---
   function calcF1() {
     let sx = parseCoord(document.getElementById('f1_sx').value); let sy = parseCoord(document.getElementById('f1_sy').value);
     let ex = parseCoord(document.getElementById('f1_ex').value); let ey = parseCoord(document.getElementById('f1_ey').value);
@@ -343,7 +418,6 @@
     document.getElementById('routeList').appendChild(row);
   }
 
-  // ★トラバース計算専用のセーブUI生成
   const getCompactSaveUI = (id, label, x, y) => {
     return `<div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color); text-align: left;">
               <div style="font-family: monospace; font-size: 16px; margin-bottom: 8px;">${label}: E:${pad5(x)} N:${pad5(y)}</div>
@@ -354,7 +428,6 @@
             </div>`;
   };
 
-  // ★トラバース計算専用の保存処理（共通カラーを使用）
   function quickSaveTraverse(inputId, x, y) {
     let name = document.getElementById(inputId).value;
     let colorInput = document.getElementById('f5_color');
@@ -368,13 +441,11 @@
     updateSavedList(); updateMapDropdowns();
   }
 
-  // ★トラバース計算の改修
   function calcF5() {
     let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value);
     if(cx===null || cy===null) return;
     let azInputs = document.querySelectorAll('.r_az'); let distInputs = document.querySelectorAll('.r_dist');
     
-    // 全体共通のカラーピッカー
     let html = `<div class="color-select-row" style="margin-bottom:15px; padding-bottom: 10px;">
                   <span style="font-size: 14px;">一括マップ表示色</span>
                   <input type="color" id="f5_color" class="color-picker" onchange="syncColorPickers(this.value)">
@@ -394,7 +465,6 @@
     syncColorPickers();
   }
 
-  // --- 登録・一覧機能 ---
   document.getElementById('f6_color').addEventListener('change', function(e) { syncColorPickers(e.target.value); });
 
   function savePointManual() {
