@@ -59,8 +59,6 @@
     button.btn-gray { background-color: #8e8e93; }
     button.btn-red { background-color: #ff3b30; }
     button.btn-small { padding: 10px; font-size: 14px; margin-bottom: 10px;}
-    
-    /* ★ GPSボタンのレイアウト調整（文字サイズ・余白を小さくし、1行に収める） */
     button.btn-gps { background-color: #ff9500; padding: 8px 12px; font-size: 13px; margin-bottom: 0; width: auto; flex-shrink: 0; }
     
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); line-height: 1.5; }
@@ -96,7 +94,7 @@
 
 <div class="container">
   <select id="menu" onchange="switchView()">
-    <option value="func1">1. 座標対座標 (高低角対応)</option>
+    <option value="func1">1. 座標対座標</option>
     <option value="func2">2. 極座標</option>
     <option value="func3">3. 前方交会法</option>
     <option value="func4">4. 後方交会法</option>
@@ -132,11 +130,20 @@
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
         <h3 style="margin:0;">現在地</h3>
-        <button class="btn-gps" onclick="getGPS('f2_x', 'f2_y', null)">📍GPS取得</button>
+        <button class="btn-gps" onclick="getGPS('f2_x', 'f2_y', 'f2_z')">📍GPS取得</button>
       </div>
-      <div class="input-group"><input type="text" inputmode="numeric" id="f2_x" placeholder="E座標"><input type="text" inputmode="numeric" id="f2_y" placeholder="N座標"></div>
+      <div class="input-group">
+        <input type="text" inputmode="numeric" id="f2_x" placeholder="E座標 (必須)">
+        <input type="text" inputmode="numeric" id="f2_y" placeholder="N座標 (必須)">
+        <input type="number" id="f2_z" placeholder="標高(m) ※任意">
+      </div>
+      <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
       <h3>目標への諸元</h3>
-      <div class="input-group"><input type="number" id="f2_az" placeholder="方位角(mil)"><input type="number" id="f2_dist" placeholder="距離(m)"></div>
+      <div class="input-group">
+        <input type="number" id="f2_az" placeholder="方位角(mil) (必須)">
+        <input type="number" id="f2_dist" placeholder="距離(m) (必須)">
+        <input type="number" id="f2_elv" placeholder="高低角(mil) ※任意">
+      </div>
     </div>
     <button onclick="calcF2()">計算実行</button>
     <div id="res2" class="result hidden"></div>
@@ -209,8 +216,8 @@
       </div>
       <div class="input-group">
         <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
-        <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標">
-        <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標">
+        <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標 (必須)">
+        <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標 (必須)">
         <input type="number" id="f6_z" placeholder="標高(m) ※任意">
       </div>
       <div style="display:flex; gap:10px;">
@@ -344,7 +351,7 @@
     if (selected === 'func7') { updateMapDropdowns(); drawMap(null, null, true); }
   }
 
-  // ===== 計算コアロジック (高低角・高低差対応) =====
+  // ===== 計算コアロジック =====
   function calcData(sx, sy, sz, ex, ey, ez) {
     let dx = ex - sx; let dy = ey - sy;
     if (dx < -50000) dx += 100000; else if (dx > 50000) dx -= 100000;
@@ -361,19 +368,20 @@
     return { mil: mil, dist: dist, elvMil: elvMil, dz: dz };
   }
 
-  function getSaveUI(inputId, x, y) {
+  function getSaveUI(inputId, x, y, z = null) {
+    let zArg = z !== null ? z : 'null';
     return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
               <div class="color-select-row" style="margin-bottom:10px;"><span>マップ表示色</span><input type="color" id="${inputId}_color" class="color-picker" onchange="syncColorPickers(this.value)"></div>
-              <div class="quick-save"><input type="text" id="${inputId}" placeholder="名称"><button onclick="quickSave('${inputId}', ${x}, ${y})">登録</button></div>
+              <div class="quick-save"><input type="text" id="${inputId}" placeholder="名称"><button onclick="quickSave('${inputId}', ${x}, ${y}, ${zArg})">登録</button></div>
             </div>`;
   }
-  function quickSave(inputId, x, y) {
+  function quickSave(inputId, x, y, z = null) {
     let name = document.getElementById(inputId).value; let color = document.getElementById(inputId + '_color') ? document.getElementById(inputId + '_color').value : lastColor;
     if (!name) { alert("名称を入力してください"); return; }
     syncColorPickers(color);
     let existing = savedPoints.find(p => p.name === name);
-    if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = null; existing.color = color; alert("上書き登録しました"); } 
-    else { savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), z: null, color: color }); alert("登録しました"); }
+    if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = z; existing.color = color; alert("上書き登録しました"); } 
+    else { savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), z: z, color: color }); alert("登録しました"); }
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById(inputId).value = ""; updateSavedList(); updateMapDropdowns();
   }
 
@@ -389,10 +397,30 @@
   }
 
   function calcF2() {
-    let x = parseCoord(document.getElementById('f2_x').value); let y = parseCoord(document.getElementById('f2_y').value); let az = Number(document.getElementById('f2_az').value); let dist = Number(document.getElementById('f2_dist').value);
-    if(x===null || y===null) return;
-    let targetX = x + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); let targetY = y + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
-    let res = document.getElementById('res2'); res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}` + getSaveUI('qname_f2', targetX, targetY); res.classList.remove('hidden'); syncColorPickers();
+    let x = parseCoord(document.getElementById('f2_x').value); 
+    let y = parseCoord(document.getElementById('f2_y').value); 
+    let z = parseZ(document.getElementById('f2_z').value);
+    let azStr = document.getElementById('f2_az').value; 
+    let distStr = document.getElementById('f2_dist').value;
+    let elv = parseZ(document.getElementById('f2_elv').value);
+
+    if(x===null || y===null || azStr === "" || distStr === "") return;
+    
+    let az = Number(azStr); let dist = Number(distStr);
+    let targetX = x + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); 
+    let targetY = y + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
+    
+    let targetZ = null;
+    let zStrInfo = "";
+    if (z !== null && elv !== null) {
+        let dz = dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE));
+        targetZ = z + dz;
+        zStrInfo = `  Z: ${Math.round(targetZ)}`;
+    }
+
+    let res = document.getElementById('res2'); 
+    res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}${zStrInfo}` + getSaveUI('qname_f2', targetX, targetY, targetZ); 
+    res.classList.remove('hidden'); syncColorPickers();
   }
 
   function calcF3() {
@@ -418,7 +446,21 @@
   }
 
   function addRouteRow() { let row = document.createElement('div'); row.className = 'route-row'; row.innerHTML = `<input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`; document.getElementById('routeList').appendChild(row); }
-  const getCompactSaveUI = (id, label, x, y) => { return `<div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px dashed var(--border-color); text-align:left;"><div style="font-family:monospace; font-size:16px; margin-bottom:8px;">${label}: E:${pad5(x)} N:${pad5(y)}</div><div class="quick-save" style="margin-top:5px;"><input type="text" id="${id}" placeholder="${label}名称"><button onclick="quickSave('${id}', ${x}, ${y})">登録</button></div></div>`; };
+  const getCompactSaveUI = (id, label, x, y, z = null) => { 
+    let zArg = z !== null ? z : 'null';
+    let zDisp = z !== null ? ` Z:${Math.round(z)}` : "";
+    return `<div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px dashed var(--border-color); text-align:left;"><div style="font-family:monospace; font-size:16px; margin-bottom:8px;">${label}: E:${pad5(x)} N:${pad5(y)}${zDisp}</div><div class="quick-save" style="margin-top:5px;"><input type="text" id="${id}" placeholder="${label}名称"><button onclick="quickSaveTraverse('${id}', ${x}, ${y}, ${zArg})">登録</button></div></div>`; 
+  };
+
+  function quickSaveTraverse(inputId, x, y, z = null) {
+    let name = document.getElementById(inputId).value; let colorInput = document.getElementById('f5_color'); let color = colorInput ? colorInput.value : lastColor;
+    if (!name) { alert("名称を入力してください"); return; }
+    syncColorPickers(color);
+    let existing = savedPoints.find(p => p.name === name);
+    if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = z; existing.color = color; alert("上書き登録しました"); } 
+    else { savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), z: z, color: color }); alert("登録しました"); }
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById(inputId).value = ""; updateSavedList(); updateMapDropdowns();
+  }
 
   function calcF5() {
     let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value); if(cx===null || cy===null) return;
