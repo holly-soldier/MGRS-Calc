@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mgrs-calc-v3'; // ← 更新時はここを v3, v4 と変える
+const CACHE_NAME = 'mgrs-calc-v4'; // ← 更新時はここを v3, v4 と変える
 const urlsToCache = [
   './',
   './index.html',
