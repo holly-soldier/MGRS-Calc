@@ -244,28 +244,32 @@
   <div id="func7" class="view hidden">
     
     <div class="card">
-      <h3>🗺️ カスタム地図（オフライン背景）</h3>
-      <p style="font-size:12px; margin-top:0; opacity:0.7;">スマホ内の地図画像を読み込み、左上と右下の座標を入力することで背景に配置します。</p>
-      <input type="file" id="map_image_input" accept="image/*" style="width:100%; margin-bottom: 10px; font-size:14px;">
-      
-      <div style="display:flex; gap:10px; margin-bottom:5px;">
-        <input type="text" id="map_tl_e" placeholder="左上 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
-        <input type="text" id="map_tl_n" placeholder="左上 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">マップ (1km方眼)</h3>
+        <button class="btn-gray btn-small" onclick="toggleMapSettings()" style="margin:0; width:auto; padding:6px 10px;">🗺️ 背景設定</button>
       </div>
-      <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <input type="text" id="map_br_e" placeholder="右下 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
-        <input type="text" id="map_br_n" placeholder="右下 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
-      </div>
-      
-      <div style="display:flex; gap:10px;">
-        <button class="btn-green btn-small" onclick="saveMapOverlay()" style="margin:0; flex:1;">設定・保存</button>
-        <button class="btn-red btn-small" onclick="clearMapOverlay()" style="margin:0; flex:1;">背景をクリア</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>マップ (1km方眼)</h3>
       <p style="font-size:12px; margin-top:0; opacity:0.7;">※1本指で移動、2本指で拡大縮小</p>
+
+      <div id="map_settings_area" class="hidden" style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid var(--border-color);">
+        <h4 style="margin-top:0; margin-bottom:8px; font-size:14px; color:var(--text-color);">カスタム地図（オフライン背景）</h4>
+        <p style="font-size:12px; margin-top:0; opacity:0.7;">スマホ内の地図画像を読み込み、左上と右下の座標を入力することで背景に配置します。</p>
+        <input type="file" id="map_image_input" accept="image/*" style="width:100%; margin-bottom: 10px; font-size:14px;">
+        
+        <div style="display:flex; gap:10px; margin-bottom:5px;">
+          <input type="text" id="map_tl_e" placeholder="左上 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+          <input type="text" id="map_tl_n" placeholder="左上 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <input type="text" id="map_br_e" placeholder="右下 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+          <input type="text" id="map_br_n" placeholder="右下 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+        </div>
+        
+        <div style="display:flex; gap:10px;">
+          <button class="btn-green btn-small" onclick="saveMapOverlay()" style="margin:0; flex:1;">設定・保存</button>
+          <button class="btn-red btn-small" onclick="clearMapOverlay()" style="margin:0; flex:1;">背景をクリア</button>
+        </div>
+      </div>
+
       <div class="map-container">
         <canvas id="mapCanvas" width="400" height="400"></canvas>
       </div>
@@ -306,6 +310,16 @@
     else document.body.classList.remove('tactical-night');
     localStorage.setItem('tacticalMode', isNightMode);
     drawMap(currentP1, currentP2, false); 
+  }
+
+  // ★カスタム地図設定エリアの開閉トグル
+  function toggleMapSettings() {
+    let el = document.getElementById('map_settings_area');
+    if(el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
   }
 
   const parseCoord = (val) => {
@@ -584,7 +598,6 @@
       reader.onload = function(e) {
         let img = new Image();
         img.onload = function() {
-          // 容量削減のため最大1600px幅にリサイズして保存
           let canvas = document.createElement('canvas'); let ctx = canvas.getContext('2d');
           let maxW = 1600; let scale = img.width > maxW ? maxW / img.width : 1;
           canvas.width = img.width * scale; canvas.height = img.height * scale;
@@ -595,7 +608,9 @@
           try {
             localStorage.setItem('mgrsMapOverlay', JSON.stringify(mapOverlay));
             mapImageObj.src = dataUrl;
-            alert("地図画像を保存・設定しました！"); drawMap(currentP1, currentP2, true);
+            alert("地図画像を保存・設定しました！"); 
+            toggleMapSettings(); // 設定完了後に閉じる
+            drawMap(currentP1, currentP2, true);
           } catch(err) { alert("画像サイズが大きすぎます。容量の小さい画像を選んでください。"); }
         };
         img.src = e.target.result;
@@ -604,7 +619,9 @@
     } else if (mapOverlay) {
       mapOverlay.tl_e = tl_e; mapOverlay.tl_n = tl_n; mapOverlay.br_e = br_e; mapOverlay.br_n = br_n;
       localStorage.setItem('mgrsMapOverlay', JSON.stringify(mapOverlay));
-      alert("地図の座標を更新しました！"); drawMap(currentP1, currentP2, true);
+      alert("地図の座標を更新しました！"); 
+      toggleMapSettings(); // 設定完了後に閉じる
+      drawMap(currentP1, currentP2, true);
     } else {
       alert("地図画像を選択してください");
     }
@@ -686,7 +703,7 @@
        let img_x = getX_real(mapOverlay.tl_e);
        let img_y = getY_real(mapOverlay.tl_n);
        let img_w = getX_real(mapOverlay.br_e) - img_x;
-       let img_h = getY_real(mapOverlay.br_n) - img_y; // Nは上に行くほど大きいので、tl_n(上)のY座標はbr_n(下)のY座標より小さくなる
+       let img_h = getY_real(mapOverlay.br_n) - img_y; 
        ctx.drawImage(mapImageObj, img_x, img_y, img_w, img_h);
     }
 
