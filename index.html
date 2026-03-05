@@ -208,7 +208,6 @@
         <div style="display:flex; gap:10px;">
           <button class="btn-green btn-small" onclick="importPoints()" style="margin:0; flex:1;">↓ 読込</button>
           <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0; flex:1;">↑ 書出</button>
-          <button class="btn-red btn-small" onclick="deleteAllPoints()" style="margin:0; flex:1;">全削除</button>
         </div>
       </div>
     </div>
@@ -235,14 +234,17 @@
     </div>
 
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0;">登録済み座標</h3>
-        <select id="sort_select" style="width:auto; padding:5px 10px; font-size:14px; margin:0; border-radius:5px;" onchange="applySort()">
-          <option value="manual">手動(≡)</option>
-          <option value="name_asc">名前順</option>
-          <option value="e_asc">E座標(西→東)</option>
-          <option value="n_asc">N座標(南→北)</option>
-        </select>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:5px;">
+        <h3 style="margin:0; font-size:15px; white-space:nowrap;">登録済み座標</h3>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <select id="sort_select" style="width:auto; padding:5px; font-size:12px; margin:0; border-radius:5px;" onchange="applySort()">
+            <option value="manual">手動(≡)</option>
+            <option value="name_asc">名前順</option>
+            <option value="e_asc">E座標順</option>
+            <option value="n_asc">N座標順</option>
+          </select>
+          <button class="btn-red btn-small" onclick="deleteAllPoints()" style="margin:0; width:auto; padding:6px 10px; font-size:12px; flex-shrink:0;">全削除</button>
+        </div>
       </div>
       <div id="savedList"></div>
     </div>
@@ -319,14 +321,12 @@
     drawMap(currentP1, currentP2, false); 
   }
 
-  // ★カスタム地図設定エリアの開閉トグル
   function toggleMapSettings() {
     let el = document.getElementById('map_settings_area');
     if(el.classList.contains('hidden')) { el.classList.remove('hidden'); } 
     else { el.classList.add('hidden'); }
   }
 
-  // ★一括入出力エリアの開閉トグル
   function toggleBatchIO() {
     let el = document.getElementById('batch_io_area');
     if(el.classList.contains('hidden')) { el.classList.remove('hidden'); } 
@@ -529,7 +529,7 @@
       localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); 
       alert(`${addedCount}件を追加、${updatedCount}件を上書きしました！`); 
       document.getElementById('io_text').value = "";
-      toggleBatchIO(); // 読み込み成功後に自動で閉じる
+      toggleBatchIO(); 
     } else { 
       alert("読み込める座標がありませんでした。\n【書式】名称 E N 標高(任意) 色"); 
     }
@@ -625,7 +625,7 @@
             localStorage.setItem('mgrsMapOverlay', JSON.stringify(mapOverlay));
             mapImageObj.src = dataUrl;
             alert("地図画像を保存・設定しました！"); 
-            toggleMapSettings(); // 設定完了後に閉じる
+            toggleMapSettings();
             drawMap(currentP1, currentP2, true);
           } catch(err) { alert("画像サイズが大きすぎます。容量の小さい画像を選んでください。"); }
         };
@@ -636,7 +636,7 @@
       mapOverlay.tl_e = tl_e; mapOverlay.tl_n = tl_n; mapOverlay.br_e = br_e; mapOverlay.br_n = br_n;
       localStorage.setItem('mgrsMapOverlay', JSON.stringify(mapOverlay));
       alert("地図の座標を更新しました！"); 
-      toggleMapSettings(); // 設定完了後に閉じる
+      toggleMapSettings();
       drawMap(currentP1, currentP2, true);
     } else {
       alert("地図画像を選択してください");
