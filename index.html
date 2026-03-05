@@ -41,7 +41,7 @@
     
     select, input[type="text"], input[type="number"], input[type="file"], textarea { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
     select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
-    textarea { width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; border-radius: 5px; resize: vertical; min-height: 120px; margin-bottom: 10px; font-family: monospace; }
+    textarea { width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; border-radius: 5px; resize: vertical; min-height: 120px; margin-bottom: 10px; font-family: monospace; border:1px solid var(--border-color); }
     input[type="file"] { padding: 8px; border-radius: 5px; box-sizing: border-box; }
     
     .card { background: var(--card-bg); padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; transition: background-color 0.3s; }
@@ -195,14 +195,21 @@
   </div>
 
   <div id="func6" class="view hidden">
-    <div class="card">
-      <h3>テキストで一括入出力</h3>
-      <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 標高(任意) 色<br>例: T1 00700 04245 150 赤</p>
-      <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
-      <div style="display:flex; gap:10px;">
-        <button class="btn-green btn-small" onclick="importPoints()" style="margin:0; flex:1;">↓ 読み込み</button>
-        <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0; flex:1;">↑ 書き出し</button>
-        <button class="btn-red btn-small" onclick="deleteAllPoints()" style="margin:0; flex:1;">一括削除</button>
+    
+    <div class="card" style="padding-bottom: 5px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">テキスト一括入出力</h3>
+        <button class="btn-gray btn-small" onclick="toggleBatchIO()" style="margin:0; width:auto; padding:6px 10px;">📁 データ共有</button>
+      </div>
+      
+      <div id="batch_io_area" class="hidden" style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border-color);">
+        <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 標高(任意) 色<br>例: T1 00700 04245 150 赤</p>
+        <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-green btn-small" onclick="importPoints()" style="margin:0; flex:1;">↓ 読込</button>
+          <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0; flex:1;">↑ 書出</button>
+          <button class="btn-red btn-small" onclick="deleteAllPoints()" style="margin:0; flex:1;">全削除</button>
+        </div>
       </div>
     </div>
 
@@ -315,11 +322,15 @@
   // ★カスタム地図設定エリアの開閉トグル
   function toggleMapSettings() {
     let el = document.getElementById('map_settings_area');
-    if(el.classList.contains('hidden')) {
-      el.classList.remove('hidden');
-    } else {
-      el.classList.add('hidden');
-    }
+    if(el.classList.contains('hidden')) { el.classList.remove('hidden'); } 
+    else { el.classList.add('hidden'); }
+  }
+
+  // ★一括入出力エリアの開閉トグル
+  function toggleBatchIO() {
+    let el = document.getElementById('batch_io_area');
+    if(el.classList.contains('hidden')) { el.classList.remove('hidden'); } 
+    else { el.classList.add('hidden'); }
   }
 
   const parseCoord = (val) => {
@@ -386,7 +397,6 @@
     if (selected === 'func6') updateSavedList();
     if (selected === 'func7') { 
       updateMapDropdowns(); 
-      // 既存のオーバーレイ座標を入力欄にセット
       if (mapOverlay) {
          document.getElementById('map_tl_e').value = pad5(mapOverlay.tl_e); document.getElementById('map_tl_n').value = pad5(mapOverlay.tl_n);
          document.getElementById('map_br_e').value = pad5(mapOverlay.br_e); document.getElementById('map_br_n').value = pad5(mapOverlay.br_n);
@@ -515,8 +525,14 @@
           }
        }
     }
-    if (addedCount > 0 || updatedCount > 0) { localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); alert(`${addedCount}件を追加、${updatedCount}件を上書きしました！`); document.getElementById('io_text').value = ""; } 
-    else { alert("読み込める座標がありませんでした。\n【書式】名称 E N 標高(任意) 色"); }
+    if (addedCount > 0 || updatedCount > 0) { 
+      localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); 
+      alert(`${addedCount}件を追加、${updatedCount}件を上書きしました！`); 
+      document.getElementById('io_text').value = "";
+      toggleBatchIO(); // 読み込み成功後に自動で閉じる
+    } else { 
+      alert("読み込める座標がありませんでした。\n【書式】名称 E N 標高(任意) 色"); 
+    }
   }
 
   function exportPoints() {
