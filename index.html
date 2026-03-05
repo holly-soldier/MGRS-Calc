@@ -39,9 +39,10 @@
     header { background-color: var(--header-bg); color: var(--header-text); padding: 15px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
     .container { padding: 15px; }
     
-    select, input[type="text"], input[type="number"], textarea { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
+    select, input[type="text"], input[type="number"], input[type="file"], textarea { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
     select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
     textarea { width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; border-radius: 5px; resize: vertical; min-height: 120px; margin-bottom: 10px; font-family: monospace; }
+    input[type="file"] { padding: 8px; border-radius: 5px; box-sizing: border-box; }
     
     .card { background: var(--card-bg); padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; transition: background-color 0.3s; }
     .card h3 { margin-top: 0; font-size: 16px; color: var(--text-color); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -81,7 +82,7 @@
     .action-btns { display: flex; gap: 5px; margin-right: 5px; }
     .action-btns button { width: auto; padding: 8px 12px; margin: 0; font-size: 12px; border-radius: 5px; }
 
-    .map-container { position: relative; width: 100%; }
+    .map-container { position: relative; width: 100%; overflow: hidden; }
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; transition: background-color 0.3s; }
   </style>
 </head>
@@ -241,6 +242,27 @@
   </div>
 
   <div id="func7" class="view hidden">
+    
+    <div class="card">
+      <h3>🗺️ カスタム地図（オフライン背景）</h3>
+      <p style="font-size:12px; margin-top:0; opacity:0.7;">スマホ内の地図画像を読み込み、左上と右下の座標を入力することで背景に配置します。</p>
+      <input type="file" id="map_image_input" accept="image/*" style="width:100%; margin-bottom: 10px; font-size:14px;">
+      
+      <div style="display:flex; gap:10px; margin-bottom:5px;">
+        <input type="text" id="map_tl_e" placeholder="左上 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
+        <input type="text" id="map_tl_n" placeholder="左上 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+        <input type="text" id="map_br_e" placeholder="右下 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
+        <input type="text" id="map_br_n" placeholder="右下 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px;">
+      </div>
+      
+      <div style="display:flex; gap:10px;">
+        <button class="btn-green btn-small" onclick="saveMapOverlay()" style="margin:0; flex:1;">設定・保存</button>
+        <button class="btn-red btn-small" onclick="clearMapOverlay()" style="margin:0; flex:1;">背景をクリア</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>マップ (1km方眼)</h3>
       <p style="font-size:12px; margin-top:0; opacity:0.7;">※1本指で移動、2本指で拡大縮小</p>
@@ -271,6 +293,11 @@
   let isNightMode = localStorage.getItem('tacticalMode') === 'true';
   let editingId = null; 
 
+  // ★カスタム地図用の変数
+  let mapOverlay = JSON.parse(localStorage.getItem('mgrsMapOverlay') || 'null');
+  let mapImageObj = new Image();
+  if (mapOverlay) { mapImageObj.src = mapOverlay.dataUrl; }
+
   if (isNightMode) document.body.classList.add('tactical-night');
 
   function toggleNightMode() {
@@ -299,14 +326,11 @@
   // ===== GPS / UTM 変換ロジック =====
   function latLonToUTM(lat, lon) {
     const a = 6378137.0; const f = 1 / 298.257223563; const k0 = 0.9996;
-    const eccSquared = 2*f - f*f;
-    const zoneNumber = Math.floor((lon + 180) / 6) + 1;
-    const lonOrigin = (zoneNumber - 1) * 6 - 180 + 3; 
-    const lonOriginRad = lonOrigin * Math.PI / 180;
+    const eccSquared = 2*f - f*f; const zoneNumber = Math.floor((lon + 180) / 6) + 1;
+    const lonOrigin = (zoneNumber - 1) * 6 - 180 + 3; const lonOriginRad = lonOrigin * Math.PI / 180;
     const latRad = lat * Math.PI / 180; const lonRad = lon * Math.PI / 180;
     const N = a / Math.sqrt(1 - eccSquared * Math.sin(latRad) * Math.sin(latRad));
-    const T = Math.tan(latRad) * Math.tan(latRad);
-    const C = eccSquared * Math.cos(latRad) * Math.cos(latRad) / (1 - eccSquared);
+    const T = Math.tan(latRad) * Math.tan(latRad); const C = eccSquared * Math.cos(latRad) * Math.cos(latRad) / (1 - eccSquared);
     const A = Math.cos(latRad) * (lonRad - lonOriginRad);
     const M = a * ((1 - eccSquared/4 - 3*eccSquared*eccSquared/64 - 5*Math.pow(eccSquared,3)/256) * latRad 
                  - (3*eccSquared/8 + 3*eccSquared*eccSquared/32 + 45*Math.pow(eccSquared,3)/1024) * Math.sin(2*latRad) 
@@ -318,16 +342,14 @@
     return { e: utmE, n: utmN };
   }
   function getMGRSfromLatLon(lat, lon) {
-    let utm = latLonToUTM(lat, lon);
-    return { e: Math.floor(utm.e % 100000), n: Math.floor(utm.n % 100000) };
+    let utm = latLonToUTM(lat, lon); return { e: Math.floor(utm.e % 100000), n: Math.floor(utm.n % 100000) };
   }
   function getGPS(eId, nId, zId) {
     if (!navigator.geolocation) { alert("この端末ではGPSがサポートされていません"); return; }
     document.getElementById(eId).value = "取得中..."; document.getElementById(nId).value = "取得中...";
     navigator.geolocation.getCurrentPosition(pos => {
       let mgrs = getMGRSfromLatLon(pos.coords.latitude, pos.coords.longitude);
-      document.getElementById(eId).value = pad5(mgrs.e);
-      document.getElementById(nId).value = pad5(mgrs.n);
+      document.getElementById(eId).value = pad5(mgrs.e); document.getElementById(nId).value = pad5(mgrs.n);
       if (zId && pos.coords.altitude !== null) { document.getElementById(zId).value = Math.round(pos.coords.altitude); }
     }, err => { alert("GPS取得失敗: " + err.message); document.getElementById(eId).value = ""; document.getElementById(nId).value = ""; }, { enableHighAccuracy: true });
   }
@@ -348,7 +370,15 @@
     document.getElementById(selected).classList.remove('hidden');
     syncColorPickers();
     if (selected === 'func6') updateSavedList();
-    if (selected === 'func7') { updateMapDropdowns(); drawMap(null, null, true); }
+    if (selected === 'func7') { 
+      updateMapDropdowns(); 
+      // 既存のオーバーレイ座標を入力欄にセット
+      if (mapOverlay) {
+         document.getElementById('map_tl_e').value = pad5(mapOverlay.tl_e); document.getElementById('map_tl_n').value = pad5(mapOverlay.tl_n);
+         document.getElementById('map_br_e').value = pad5(mapOverlay.br_e); document.getElementById('map_br_n').value = pad5(mapOverlay.br_n);
+      }
+      drawMap(null, null, true); 
+    }
   }
 
   // ===== 計算コアロジック =====
@@ -356,15 +386,10 @@
     let dx = ex - sx; let dy = ey - sy;
     if (dx < -50000) dx += 100000; else if (dx > 50000) dx -= 100000;
     if (dy < -50000) dy += 100000; else if (dy > 50000) dy -= 100000;
-    let dist = Math.sqrt(dx*dx + dy*dy);
-    let rad = Math.atan2(dx, dy);
-    let mil = rad * (MILS_CIRCLE / (2 * Math.PI));
-    if (mil < 0) mil += MILS_CIRCLE;
+    let dist = Math.sqrt(dx*dx + dy*dy); let rad = Math.atan2(dx, dy);
+    let mil = rad * (MILS_CIRCLE / (2 * Math.PI)); if (mil < 0) mil += MILS_CIRCLE;
     let elvMil = null; let dz = null;
-    if (sz !== null && ez !== null) { 
-        dz = ez - sz; 
-        elvMil = Math.atan2(dz, dist) * (MILS_CIRCLE / (2 * Math.PI)); 
-    }
+    if (sz !== null && ez !== null) { dz = ez - sz; elvMil = Math.atan2(dz, dist) * (MILS_CIRCLE / (2 * Math.PI)); }
     return { mil: mil, dist: dist, elvMil: elvMil, dz: dz };
   }
 
@@ -390,36 +415,20 @@
     let ex = parseCoord(document.getElementById('f1_ex').value); let ey = parseCoord(document.getElementById('f1_ey').value); let ez = parseZ(document.getElementById('f1_ez').value);
     if(sx===null || sy===null || ex===null || ey===null) return;
     let r = calcData(sx, sy, sz, ex, ey, ez);
-    let res = document.getElementById('res1');
     let elvText = r.elvMil !== null ? `<br>高低差: ${r.dz > 0 ? '+' : ''}${Math.round(r.dz)} m<br>高低角: ${r.elvMil > 0 ? '+' : ''}${Math.round(r.elvMil)} mil` : "";
-    res.innerHTML = `方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m${elvText}`;
-    res.classList.remove('hidden');
+    document.getElementById('res1').innerHTML = `方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m${elvText}`;
+    document.getElementById('res1').classList.remove('hidden');
   }
 
   function calcF2() {
-    let x = parseCoord(document.getElementById('f2_x').value); 
-    let y = parseCoord(document.getElementById('f2_y').value); 
-    let z = parseZ(document.getElementById('f2_z').value);
-    let azStr = document.getElementById('f2_az').value; 
-    let distStr = document.getElementById('f2_dist').value;
-    let elv = parseZ(document.getElementById('f2_elv').value);
-
+    let x = parseCoord(document.getElementById('f2_x').value); let y = parseCoord(document.getElementById('f2_y').value); let z = parseZ(document.getElementById('f2_z').value);
+    let azStr = document.getElementById('f2_az').value; let distStr = document.getElementById('f2_dist').value; let elv = parseZ(document.getElementById('f2_elv').value);
     if(x===null || y===null || azStr === "" || distStr === "") return;
-    
     let az = Number(azStr); let dist = Number(distStr);
-    let targetX = x + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); 
-    let targetY = y + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
-    
-    let targetZ = null;
-    let zStrInfo = "";
-    if (z !== null && elv !== null) {
-        let dz = dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE));
-        targetZ = z + dz;
-        zStrInfo = `  Z: ${Math.round(targetZ)}`;
-    }
-
-    let res = document.getElementById('res2'); 
-    res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}${zStrInfo}` + getSaveUI('qname_f2', targetX, targetY, targetZ); 
+    let targetX = x + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); let targetY = y + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
+    let targetZ = null; let zStrInfo = "";
+    if (z !== null && elv !== null) { let dz = dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE)); targetZ = z + dz; zStrInfo = `  Z: ${Math.round(targetZ)}`; }
+    let res = document.getElementById('res2'); res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}${zStrInfo}` + getSaveUI('qname_f2', targetX, targetY, targetZ); 
     res.classList.remove('hidden'); syncColorPickers();
   }
 
@@ -447,15 +456,13 @@
 
   function addRouteRow() { let row = document.createElement('div'); row.className = 'route-row'; row.innerHTML = `<input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`; document.getElementById('routeList').appendChild(row); }
   const getCompactSaveUI = (id, label, x, y, z = null) => { 
-    let zArg = z !== null ? z : 'null';
-    let zDisp = z !== null ? ` Z:${Math.round(z)}` : "";
+    let zArg = z !== null ? z : 'null'; let zDisp = z !== null ? ` Z:${Math.round(z)}` : "";
     return `<div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px dashed var(--border-color); text-align:left;"><div style="font-family:monospace; font-size:16px; margin-bottom:8px;">${label}: E:${pad5(x)} N:${pad5(y)}${zDisp}</div><div class="quick-save" style="margin-top:5px;"><input type="text" id="${id}" placeholder="${label}名称"><button onclick="quickSaveTraverse('${id}', ${x}, ${y}, ${zArg})">登録</button></div></div>`; 
   };
 
   function quickSaveTraverse(inputId, x, y, z = null) {
     let name = document.getElementById(inputId).value; let colorInput = document.getElementById('f5_color'); let color = colorInput ? colorInput.value : lastColor;
-    if (!name) { alert("名称を入力してください"); return; }
-    syncColorPickers(color);
+    if (!name) { alert("名称を入力してください"); return; } syncColorPickers(color);
     let existing = savedPoints.find(p => p.name === name);
     if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = z; existing.color = color; alert("上書き登録しました"); } 
     else { savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), z: z, color: color }); alert("登録しました"); }
@@ -475,7 +482,7 @@
     document.getElementById('res5').innerHTML = html; document.getElementById('res5').classList.remove('hidden'); syncColorPickers();
   }
 
-  // ★テキスト一括入出力 (Z標高対応)
+  // ★テキスト一括入出力
   function importPoints() {
     let text = document.getElementById('io_text').value; if (!text.trim()) { alert("テキストを入力してください"); return; }
     let lines = text.split('\n'); let addedCount = 0; let updatedCount = 0;
@@ -564,6 +571,55 @@
     savedPoints = newArray; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById('sort_select').value = 'manual'; updateMapDropdowns();
   });
 
+  // ========== ★カスタム地図設定ロジック ==========
+  function saveMapOverlay() {
+    let fileInput = document.getElementById('map_image_input');
+    let tl_e = parseCoord(document.getElementById('map_tl_e').value); let tl_n = parseCoord(document.getElementById('map_tl_n').value);
+    let br_e = parseCoord(document.getElementById('map_br_e').value); let br_n = parseCoord(document.getElementById('map_br_n').value);
+
+    if(tl_e === null || tl_n === null || br_e === null || br_n === null) { alert("座標をすべて入力してください"); return; }
+
+    if (fileInput.files && fileInput.files[0]) {
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        let img = new Image();
+        img.onload = function() {
+          // 容量削減のため最大1600px幅にリサイズして保存
+          let canvas = document.createElement('canvas'); let ctx = canvas.getContext('2d');
+          let maxW = 1600; let scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width = img.width * scale; canvas.height = img.height * scale;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          let dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+          mapOverlay = { dataUrl: dataUrl, tl_e: tl_e, tl_n: tl_n, br_e: br_e, br_n: br_n };
+          try {
+            localStorage.setItem('mgrsMapOverlay', JSON.stringify(mapOverlay));
+            mapImageObj.src = dataUrl;
+            alert("地図画像を保存・設定しました！"); drawMap(currentP1, currentP2, true);
+          } catch(err) { alert("画像サイズが大きすぎます。容量の小さい画像を選んでください。"); }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    } else if (mapOverlay) {
+      mapOverlay.tl_e = tl_e; mapOverlay.tl_n = tl_n; mapOverlay.br_e = br_e; mapOverlay.br_n = br_n;
+      localStorage.setItem('mgrsMapOverlay', JSON.stringify(mapOverlay));
+      alert("地図の座標を更新しました！"); drawMap(currentP1, currentP2, true);
+    } else {
+      alert("地図画像を選択してください");
+    }
+  }
+
+  function clearMapOverlay() {
+    if(confirm("カスタム地図の背景をクリアしますか？")) {
+      mapOverlay = null; localStorage.removeItem('mgrsMapOverlay');
+      document.getElementById('map_image_input').value = "";
+      document.getElementById('map_tl_e').value = ""; document.getElementById('map_tl_n').value = "";
+      document.getElementById('map_br_e').value = ""; document.getElementById('map_br_n').value = "";
+      drawMap(currentP1, currentP2, true);
+    }
+  }
+
   // ========== マップ描画 ==========
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
@@ -592,16 +648,29 @@
     const cText = style.getPropertyValue('--map-text').trim() || "#888"; const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
     ctx.fillStyle = cBg; ctx.fillRect(0, 0, w, h);
 
-    if (savedPoints.length === 0) { ctx.fillStyle = cText; ctx.font = "16px sans-serif"; ctx.textAlign = "center"; ctx.fillText("座標が登録されていません", w/2, h/2); return; }
+    // ★ 描画範囲の基準にするポイント（登録座標＋地図の四隅）
+    let pointsToBound = [...savedPoints];
+    if (mapOverlay) {
+      pointsToBound.push({e: mapOverlay.tl_e, n: mapOverlay.tl_n});
+      pointsToBound.push({e: mapOverlay.br_e, n: mapOverlay.br_n});
+    }
+
+    if (pointsToBound.length === 0) { 
+      ctx.fillStyle = cText; ctx.font = "16px sans-serif"; ctx.textAlign = "center"; 
+      ctx.fillText("座標または地図が登録されていません", w/2, h/2); 
+      return; 
+    }
 
     if (resetView) {
-      mapState.refE = savedPoints[0].e; mapState.refN = savedPoints[0].n; let minDx = 0, maxDx = 0, minDy = 0, maxDy = 0;
-      savedPoints.forEach(p => {
+      mapState.refE = pointsToBound[0].e; mapState.refN = pointsToBound[0].n; 
+      let minDx = 0, maxDx = 0, minDy = 0, maxDy = 0;
+      pointsToBound.forEach(p => {
         let dx = p.e - mapState.refE; if (dx > 50000) dx -= 100000; else if (dx < -50000) dx += 100000;
         let dy = p.n - mapState.refN; if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000;
         if (dx < minDx) minDx = dx; if (dx > maxDx) maxDx = dx; if (dy < minDy) minDy = dy; if (dy > maxDy) maxDy = dy;
       });
-      if (maxDx - minDx < 2000) { let mid = (maxDx + minDx)/2; minDx = mid - 1000; maxDx = mid + 1000; } if (maxDy - minDy < 2000) { let mid = (maxDy + minDy)/2; minDy = mid - 1000; maxDy = mid + 1000; }
+      if (maxDx - minDx < 2000) { let mid = (maxDx + minDx)/2; minDx = mid - 1000; maxDx = mid + 1000; } 
+      if (maxDy - minDy < 2000) { let mid = (maxDy + minDy)/2; minDy = mid - 1000; maxDy = mid + 1000; }
       mapState.minDx = minDx; mapState.maxDx = maxDx; mapState.minDy = minDy; mapState.maxDy = maxDy;
       mapState.baseScale = Math.min((w - mapState.padding*2) / (maxDx - minDx), (h - mapState.padding*2) / (maxDy - minDy));
       mapState.x = 0; mapState.y = 0; mapState.scale = 1;
@@ -611,6 +680,16 @@
     let getY = (n) => { let dy = n - mapState.refN; if (dy > 50000) dy -= 100000; else if (dy < -50000) dy += 100000; return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y; };
     let getX_real = (e_real) => { let dx = e_real - mapState.refE; return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x; };
     let getY_real = (n_real) => { let dy = n_real - mapState.refN; return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y; };
+    
+    // ★ カスタム地図画像の描画 (グリッドやピンの下に敷く)
+    if (mapOverlay && mapImageObj.complete && mapImageObj.src) {
+       let img_x = getX_real(mapOverlay.tl_e);
+       let img_y = getY_real(mapOverlay.tl_n);
+       let img_w = getX_real(mapOverlay.br_e) - img_x;
+       let img_h = getY_real(mapOverlay.br_n) - img_y; // Nは上に行くほど大きいので、tl_n(上)のY座標はbr_n(下)のY座標より小さくなる
+       ctx.drawImage(mapImageObj, img_x, img_y, img_w, img_h);
+    }
+
     let screenToDx = (X) => mapState.minDx + ((X - mapState.x) / mapState.scale - mapState.padding) / mapState.baseScale;
     let screenToDy = (Y) => mapState.minDy + ((h - mapState.padding - (Y - mapState.y) / mapState.scale)) / mapState.baseScale;
     let startDx = screenToDx(0) - 1000; let endDx = screenToDx(w) + 1000; let endDy = screenToDy(0) + 1000; let startDy = screenToDy(h) - 1000; 
@@ -618,6 +697,7 @@
     let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000; let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
     let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000; let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
 
+    // グリッド線
     ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
     ctx.textAlign = "center"; for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); ctx.fillText(pad5(e).substring(0,2), x, h - 5); } }
     ctx.textAlign = "left"; for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); ctx.fillText(pad5(n).substring(0,2), 5, y + 3); } }
