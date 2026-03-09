@@ -1,38 +1,49 @@
-const CACHE_NAME = 'mgrs-calc-v11'; // ← 更新時はここを v3, v4 と変える
+const CACHE_NAME = 'mgrs-calc-v12'; // ★ここを更新のたびに v3, v4 と変えます
 const urlsToCache = [
   './',
   './index.html',
-  './icon.png',
-  './manifest.json'
+  './manifest.json',
+  './icon.png' // ※アイコンのファイル名に合わせてください
 ];
 
-// インストール処理（新しいバージョンを検知したらすぐインストール）
-self.addEventListener('install', event => {
-  self.skipWaiting(); // ★ここが重要：待機せずにすぐ新バージョンを適用
+// インストール時にキャッシュを保存
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
-// アクティベート処理（古いキャッシュを削除してコントロールを奪う）
-self.addEventListener('activate', event => {
+// 古いキャッシュを削除
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName); // 古いキャッシュを削除
-          }
-        })
+        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
       );
-    }).then(() => self.clients.claim()) // ★ここが重要：開いているページも即座に新バージョンに切り替え
+    })
   );
 });
 
-// 通信処理（ネットワークファーストで常に最新を狙いつつ、圏外ならキャッシュを使う）
-self.addEventListener('fetch', event => {
+// ★キャッシュ優先＆裏側で通信（Stale-While-Revalidate法）
+self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    caches.match(event.request).then((cachedResponse) => {
+      // ネットワークへのリクエストも同時に行う（裏側で）
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        // 通信成功したら、最新のデータをこっそりキャッシュに上書き
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, networkResponse.clone());
+        });
+        return networkResponse;
+      }).catch(() => {
+        // 通信失敗（圏外や微弱）の場合は何もしない
+      });
+
+      // 1. キャッシュがあれば【即座に】それを返す（爆速起動）
+      // 2. キャッシュがまだ無い初回のみ、ネットワークの完了を待つ
+      return cachedResponse || fetchPromise;
+    })
   );
 });
