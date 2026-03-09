@@ -12,15 +12,21 @@
     :root {
       --bg-color: #f2f2f7; --card-bg: #ffffff; --text-color: #333333; --border-color: #cccccc;
       --input-bg: #ffffff; --input-text: #000000; --result-bg: #e5f0ff; --result-text: #004080;
-      /* ★ マップ方眼線の色 (1km, 500m, 100mの3段階) */
-      --map-bg: #ffffff; --map-grid-1km: rgba(0, 0, 0, 0.4); --map-grid-500m: rgba(0, 0, 0, 0.25); --map-grid-100m: rgba(0, 0, 0, 0.1); --map-text: rgba(0, 0, 0, 0.7); --list-border: #eeeeee;
+      /* ★ 方眼線の色と、背景同化を防ぐ「縁取り(Halo)」の色 */
+      --map-bg: #ffffff; 
+      --map-grid-1km: rgba(0, 0, 0, 0.4); --map-grid-500m: rgba(0, 0, 0, 0.25); --map-grid-100m: rgba(0, 0, 0, 0.1); 
+      --map-text: rgba(0, 0, 0, 0.8); --list-border: #eeeeee;
+      --map-grid-halo: rgba(255, 255, 255, 0.7); --map-text-halo: rgba(255, 255, 255, 0.9);
       --header-bg: #007aff; --header-text: #ffffff;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-color: #000000; --card-bg: #1c1c1e; --text-color: #f5f5f5; --border-color: #444444;
         --input-bg: #2c2c2e; --input-text: #ffffff; --result-bg: #0a244d; --result-text: #66a3ff;
-        --map-bg: #111111; --map-grid-1km: rgba(255, 255, 255, 0.4); --map-grid-500m: rgba(255, 255, 255, 0.25); --map-grid-100m: rgba(255, 255, 255, 0.1); --map-text: rgba(255, 255, 255, 0.7); --list-border: #333333;
+        --map-bg: #111111; 
+        --map-grid-1km: rgba(255, 255, 255, 0.4); --map-grid-500m: rgba(255, 255, 255, 0.25); --map-grid-100m: rgba(255, 255, 255, 0.1); 
+        --map-text: rgba(255, 255, 255, 0.9); --list-border: #333333;
+        --map-grid-halo: rgba(0, 0, 0, 0.6); --map-text-halo: rgba(0, 0, 0, 0.8);
       }
     }
     
@@ -28,7 +34,10 @@
     body.tactical-night {
       --bg-color: #000000; --card-bg: #110000; --text-color: #ff3b30; --border-color: #aa0000;
       --input-bg: #000000; --input-text: #ff3b30; --result-bg: #220000; --result-text: #ff6b60;
-      --map-bg: #000000; --map-grid-1km: rgba(255, 59, 48, 0.6); --map-grid-500m: rgba(255, 59, 48, 0.4); --map-grid-100m: rgba(255, 59, 48, 0.15); --map-text: rgba(255, 59, 48, 0.9); --list-border: #440000;
+      --map-bg: #000000; 
+      --map-grid-1km: rgba(255, 59, 48, 0.6); --map-grid-500m: rgba(255, 59, 48, 0.4); --map-grid-100m: rgba(255, 59, 48, 0.15); 
+      --map-text: rgba(255, 59, 48, 1.0); --list-border: #440000;
+      --map-grid-halo: rgba(0, 0, 0, 0.8); --map-text-halo: rgba(0, 0, 0, 0.9);
       --header-bg: #220000; --header-text: #ff3b30;
     }
     body.tactical-night button { background-color: #330000 !important; color: #ff3b30 !important; border: 1px solid #ff3b30 !important; }
@@ -196,13 +205,11 @@
   </div>
 
   <div id="func6" class="view hidden">
-    
     <div class="card" style="padding-bottom: 5px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0;">テキスト一括入出力</h3>
         <button class="btn-gray btn-small" onclick="toggleBatchIO()" style="margin:0; width:auto; padding:6px 10px;">📁 データ共有</button>
       </div>
-      
       <div id="batch_io_area" class="hidden" style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border-color);">
         <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 標高(任意) 色<br>例: T1 00700 04245 150 赤</p>
         <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
@@ -252,7 +259,6 @@
   </div>
 
   <div id="func7" class="view hidden">
-    
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h3 style="margin:0;">マップ (1km方眼)</h3>
@@ -264,7 +270,6 @@
         <h4 style="margin-top:0; margin-bottom:8px; font-size:14px; color:var(--text-color);">カスタム地図（オフライン背景）</h4>
         <p style="font-size:12px; margin-top:0; opacity:0.7;">スマホ内の地図画像を読み込み、左上と右下の座標を入力することで背景に配置します。</p>
         <input type="file" id="map_image_input" accept="image/*" style="width:100%; margin-bottom: 10px; font-size:14px;">
-        
         <div style="display:flex; gap:10px; margin-bottom:5px;">
           <input type="text" id="map_tl_e" placeholder="左上 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
           <input type="text" id="map_tl_n" placeholder="左上 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
@@ -273,7 +278,6 @@
           <input type="text" id="map_br_e" placeholder="右下 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
           <input type="text" id="map_br_n" placeholder="右下 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
         </div>
-        
         <div style="display:flex; gap:10px;">
           <button class="btn-green btn-small" onclick="saveMapOverlay()" style="margin:0; flex:1;">設定・保存</button>
           <button class="btn-red btn-small" onclick="clearMapOverlay()" style="margin:0; flex:1;">背景をクリア</button>
@@ -307,7 +311,6 @@
   let isNightMode = localStorage.getItem('tacticalMode') === 'true';
   let editingId = null; 
 
-  // ★カスタム地図用の変数
   let mapOverlay = JSON.parse(localStorage.getItem('mgrsMapOverlay') || 'null');
   let mapImageObj = new Image();
   if (mapOverlay) { mapImageObj.src = mapOverlay.dataUrl; }
@@ -349,7 +352,7 @@
   };
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
-  // ===== GPS / UTM 変換ロジック =====
+  // ===== GPS / UTM 変換 =====
   function latLonToUTM(lat, lon) {
     const a = 6378137.0; const f = 1 / 298.257223563; const k0 = 0.9996;
     const eccSquared = 2*f - f*f; const zoneNumber = Math.floor((lon + 180) / 6) + 1;
@@ -406,7 +409,6 @@
     }
   }
 
-  // ===== 計算コアロジック =====
   function calcData(sx, sy, sz, ex, ey, ez) {
     let dx = ex - sx; let dy = ey - sy;
     if (dx < -50000) dx += 100000; else if (dx > 50000) dx -= 100000;
@@ -529,8 +531,7 @@
     if (addedCount > 0 || updatedCount > 0) { 
       localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); 
       alert(`${addedCount}件を追加、${updatedCount}件を上書きしました！`); 
-      document.getElementById('io_text').value = "";
-      toggleBatchIO(); 
+      document.getElementById('io_text').value = ""; toggleBatchIO(); 
     } else { 
       alert("読み込める座標がありませんでした。\n【書式】名称 E N 標高(任意) 色"); 
     }
@@ -542,17 +543,6 @@
     document.getElementById('io_text').value = out;
   }
   function deleteAllPoints() { if (savedPoints.length === 0) return; if (confirm("本当にすべて削除しますか？")) { savedPoints = []; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); alert("削除しました。"); } }
-
-  // 編集・手動登録
-  document.getElementById('f6_color').addEventListener('change', function(e) { syncColorPickers(e.target.value); });
-  function editPoint(id) {
-    let p = savedPoints.find(p => p.id === id); if (!p) return; editingId = id;
-    document.getElementById('edit_title').innerText = "座標を編集する"; document.getElementById('f6_name').value = p.name; document.getElementById('f6_x').value = pad5(p.e); document.getElementById('f6_y').value = pad5(p.n); document.getElementById('f6_z').value = p.z !== null && p.z !== undefined ? p.z : ""; document.getElementById('f6_color').value = p.color || lastColor;
-    document.getElementById('btn_manual_save').innerText = "更新"; document.getElementById('btn_manual_cancel').classList.remove('hidden'); document.getElementById('edit_card').scrollIntoView({ behavior: 'smooth' });
-  }
-  function cancelEdit() {
-    editingId = null; document.getElementById('edit_title').innerText = "座標を手動登録"; document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = ""; document.getElementById('f6_z').value = ""; document.getElementById('btn_manual_save').innerText = "登録"; document.getElementById('btn_manual_cancel').classList.add('hidden');
-  }
 
   function savePointManual() {
     let name = document.getElementById('f6_name').value; let x = parseCoord(document.getElementById('f6_x').value); let y = parseCoord(document.getElementById('f6_y').value); let z = parseZ(document.getElementById('f6_z').value); let color = document.getElementById('f6_color').value;
@@ -570,6 +560,14 @@
     cancelEdit(); localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true);
   }
 
+  function editPoint(id) {
+    let p = savedPoints.find(p => p.id === id); if (!p) return; editingId = id;
+    document.getElementById('edit_title').innerText = "座標を編集する"; document.getElementById('f6_name').value = p.name; document.getElementById('f6_x').value = pad5(p.e); document.getElementById('f6_y').value = pad5(p.n); document.getElementById('f6_z').value = p.z !== null && p.z !== undefined ? p.z : ""; document.getElementById('f6_color').value = p.color || lastColor;
+    document.getElementById('btn_manual_save').innerText = "更新"; document.getElementById('btn_manual_cancel').classList.remove('hidden'); document.getElementById('edit_card').scrollIntoView({ behavior: 'smooth' });
+  }
+  function cancelEdit() {
+    editingId = null; document.getElementById('edit_title').innerText = "座標を手動登録"; document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = ""; document.getElementById('f6_z').value = ""; document.getElementById('btn_manual_save').innerText = "登録"; document.getElementById('btn_manual_cancel').classList.add('hidden');
+  }
   function deletePoint(id) { savedPoints = savedPoints.filter(p => p.id !== id); localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); }
 
   function applySort() {
@@ -639,9 +637,7 @@
       alert("地図の座標を更新しました！"); 
       toggleMapSettings();
       drawMap(currentP1, currentP2, true);
-    } else {
-      alert("地図画像を選択してください");
-    }
+    } else { alert("地図画像を選択してください"); }
   }
 
   function clearMapOverlay() {
@@ -680,16 +676,18 @@
     const style = getComputedStyle(document.body);
     const cBg = style.getPropertyValue('--map-bg').trim() || "#fff"; 
     
-    // ★ グリッド線の色を取得
+    // ★ CSSから色を取得（新しく追加したHaloの色も）
     const cGrid1km = style.getPropertyValue('--map-grid-1km').trim() || "rgba(0,0,0,0.4)";
     const cGrid500m = style.getPropertyValue('--map-grid-500m').trim() || "rgba(0,0,0,0.25)";
     const cGrid100m = style.getPropertyValue('--map-grid-100m').trim() || "rgba(0,0,0,0.1)";
-    const cText = style.getPropertyValue('--map-text').trim() || "rgba(0,0,0,0.7)";
+    const cText = style.getPropertyValue('--map-text').trim() || "rgba(0,0,0,0.8)";
     const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
+    const cGridHalo = style.getPropertyValue('--map-grid-halo').trim() || "rgba(255,255,255,0.7)";
+    const cTextHalo = style.getPropertyValue('--map-text-halo').trim() || "rgba(255,255,255,0.9)";
     
     ctx.fillStyle = cBg; ctx.fillRect(0, 0, w, h);
 
-    // ★ 描画範囲の基準にするポイント（登録座標＋地図の四隅）
+    // 基準計算
     let pointsToBound = [...savedPoints];
     if (mapOverlay) {
       pointsToBound.push({e: mapOverlay.tl_e, n: mapOverlay.tl_n});
@@ -722,12 +720,10 @@
     let getX_real = (e_real) => { let dx = e_real - mapState.refE; return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x; };
     let getY_real = (n_real) => { let dy = n_real - mapState.refN; return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y; };
     
-    // ★ カスタム地図画像の描画 (グリッドやピンの下に敷く)
+    // 背景マップ描画
     if (mapOverlay && mapImageObj.complete && mapImageObj.src) {
-       let img_x = getX_real(mapOverlay.tl_e);
-       let img_y = getY_real(mapOverlay.tl_n);
-       let img_w = getX_real(mapOverlay.br_e) - img_x;
-       let img_h = getY_real(mapOverlay.br_n) - img_y; 
+       let img_x = getX_real(mapOverlay.tl_e); let img_y = getY_real(mapOverlay.tl_n);
+       let img_w = getX_real(mapOverlay.br_e) - img_x; let img_h = getY_real(mapOverlay.br_n) - img_y; 
        ctx.drawImage(mapImageObj, img_x, img_y, img_w, img_h);
     }
 
@@ -739,14 +735,17 @@
     let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000; let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
     let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000; let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
 
-    // ★ 100m方眼の判定と描画 (ズーム時のみ表示)
+    // ★ 描画設定（線をなめらかに繋ぐ）
+    ctx.lineJoin = "round";
+
+    // 100m方眼の判定と描画
     let pixelPer100m = 100 * mapState.baseScale * mapState.scale;
     if (pixelPer100m > 12) { 
       let startE_100 = Math.floor((mapState.refE + startDx) / 100) * 100; let endE_100 = Math.ceil((mapState.refE + endDx) / 100) * 100;
       let startN_100 = Math.floor((mapState.refN + startDy) / 100) * 100; let endN_100 = Math.ceil((mapState.refN + endDy) / 100) * 100;
       
-      // 1. 標準の100m線 (1kmと500m以外)
-      ctx.strokeStyle = cGrid100m; ctx.lineWidth = 1; ctx.beginPath();
+      // 1. 標準の100m線
+      ctx.beginPath();
       for(let e = startE_100; e <= endE_100; e += 100) {
         if(e % 500 === 0) continue; 
         let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
@@ -755,10 +754,12 @@
         if(n % 500 === 0) continue;
         let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
       }
-      ctx.stroke();
+      // まずHaloを太く描いてから、上に本来の色を細く描く
+      ctx.strokeStyle = cGridHalo; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.strokeStyle = cGrid100m; ctx.lineWidth = 1; ctx.stroke();
 
-      // 2. 500m線 (1km以外) - 少し太く濃くする
-      ctx.strokeStyle = cGrid500m; ctx.lineWidth = 1.2; ctx.beginPath();
+      // 2. 500m線
+      ctx.beginPath();
       for(let e = startE_100; e <= endE_100; e += 100) {
         if(e % 500 === 0 && e % 1000 !== 0) {
           let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
@@ -769,19 +770,22 @@
           let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
         }
       }
-      ctx.stroke();
+      ctx.strokeStyle = cGridHalo; ctx.lineWidth = 3.2; ctx.stroke();
+      ctx.strokeStyle = cGrid500m; ctx.lineWidth = 1.2; ctx.stroke();
 
-      // 3. 1〜9のナンバリング (さらにズームした時だけ表示)
+      // 3. 1〜9のナンバリング
       if (pixelPer100m > 20) {
-        ctx.font = "9px sans-serif"; ctx.fillStyle = cText;
+        ctx.font = "9px sans-serif";
         ctx.textAlign = "left"; 
         for(let e = startE_100; e <= endE_100; e += 100) {
           if(e % 1000 === 0) continue;
           let x = getX_real(e); 
           if(x > 0 && x < w) { 
             let digit = Math.floor(Math.abs(e % 1000) / 100);
-            ctx.fillText(digit, x + 3, h - 15); // 下端 (1kmラベルの上)
-            ctx.fillText(digit, x + 3, 10);     // 上端
+            ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; 
+            ctx.strokeText(digit, x + 3, h - 15); ctx.strokeText(digit, x + 3, 10);
+            ctx.fillStyle = cText; 
+            ctx.fillText(digit, x + 3, h - 15); ctx.fillText(digit, x + 3, 10);
           }
         }
         for(let n = startN_100; n <= endN_100; n += 100) {
@@ -789,31 +793,59 @@
           let y = getY_real(n); 
           if(y > 0 && y < h) { 
             let digit = Math.floor(Math.abs(n % 1000) / 100);
-            ctx.fillText(digit, 22, y - 2);     // 左端 (1kmラベルの右)
-            ctx.fillText(digit, w - 10, y - 2); // 右端
+            ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; 
+            ctx.strokeText(digit, 22, y - 2); ctx.strokeText(digit, w - 10, y - 2);
+            ctx.fillStyle = cText; 
+            ctx.fillText(digit, 22, y - 2); ctx.fillText(digit, w - 10, y - 2);
           }
         }
       }
     }
 
-    // ★ 1km方眼の描画 (一番くっきり)
-    ctx.strokeStyle = cGrid1km; ctx.lineWidth = 1.5; ctx.beginPath();
+    // ★ 1km方眼の描画
+    ctx.beginPath();
     for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); } }
     for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); } }
-    ctx.stroke();
+    ctx.strokeStyle = cGridHalo; ctx.lineWidth = 3.5; ctx.stroke();
+    ctx.strokeStyle = cGrid1km; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // ★ 1km方眼のテキスト(数値)
-    ctx.font = "bold 11px sans-serif"; ctx.fillStyle = cText;
-    ctx.textAlign = "center"; for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.fillText(pad5(e).substring(0,2), x, h - 5); } }
-    ctx.textAlign = "left"; for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.fillText(pad5(n).substring(0,2), 5, y + 4); } }
+    // ★ 1km方眼のテキスト(数値) - 縁取りあり
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center"; 
+    for(let e = startE_real; e <= endE_real; e += 1000) { 
+      let x = getX_real(e); if(x > -50 && x < w + 50) { 
+        let txt = pad5(e).substring(0,2);
+        ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; ctx.strokeText(txt, x, h - 5);
+        ctx.fillStyle = cText; ctx.fillText(txt, x, h - 5); 
+      } 
+    }
+    ctx.textAlign = "left"; 
+    for(let n = startN_real; n <= endN_real; n += 1000) { 
+      let y = getY_real(n); if(y > -50 && y < h + 50) { 
+        let txt = pad5(n).substring(0,2);
+        ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; ctx.strokeText(txt, 5, y + 4);
+        ctx.fillStyle = cText; ctx.fillText(txt, 5, y + 4); 
+      } 
+    }
 
-    if (highlightP1 && highlightP2) { ctx.strokeStyle = isNightMode ? '#ff3b30' : 'rgba(0, 122, 255, 0.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n)); ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke(); }
+    // 目標への照準ライン
+    if (highlightP1 && highlightP2) { 
+      ctx.strokeStyle = isNightMode ? '#ff3b30' : 'rgba(0, 122, 255, 0.7)'; 
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n)); ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke(); 
+    }
 
+    // 登録ピンの描画
     savedPoints.forEach(p => {
       let x = getX(p.e), y = getY(p.n); let pinColor = isNightMode ? '#ff3b30' : (p.color || '#ff3b30');
       if(x > -20 && x < w + 20 && y > -20 && y < h + 20) {
+        // ピンの円
         ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fillStyle = pinColor; ctx.fill();
-        ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = cMainText; ctx.font = "bold 12px sans-serif"; ctx.fillText(p.name, x + 10, y + 4);
+        ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke(); 
+        
+        // ピンのテキスト - 縁取りあり
+        ctx.font = "bold 12px sans-serif"; 
+        ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; ctx.strokeText(p.name, x + 10, y + 4);
+        ctx.fillStyle = cMainText; ctx.fillText(p.name, x + 10, y + 4);
       }
     });
   }
