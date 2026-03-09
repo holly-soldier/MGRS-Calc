@@ -12,14 +12,15 @@
     :root {
       --bg-color: #f2f2f7; --card-bg: #ffffff; --text-color: #333333; --border-color: #cccccc;
       --input-bg: #ffffff; --input-text: #000000; --result-bg: #e5f0ff; --result-text: #004080;
-      --map-bg: #ffffff; --map-grid: #e0e0e0; --map-text: #888888; --list-border: #eeeeee;
+      /* ★ マップ方眼線の色を視認性の高い半透明に変更 */
+      --map-bg: #ffffff; --map-grid-1km: rgba(0, 0, 0, 0.4); --map-grid-100m: rgba(0, 0, 0, 0.15); --map-text: rgba(0, 0, 0, 0.7); --list-border: #eeeeee;
       --header-bg: #007aff; --header-text: #ffffff;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-color: #000000; --card-bg: #1c1c1e; --text-color: #f5f5f5; --border-color: #444444;
         --input-bg: #2c2c2e; --input-text: #ffffff; --result-bg: #0a244d; --result-text: #66a3ff;
-        --map-bg: #111111; --map-grid: #333333; --map-text: #aaaaaa; --list-border: #333333;
+        --map-bg: #111111; --map-grid-1km: rgba(255, 255, 255, 0.4); --map-grid-100m: rgba(255, 255, 255, 0.15); --map-text: rgba(255, 255, 255, 0.7); --list-border: #333333;
       }
     }
     
@@ -27,7 +28,7 @@
     body.tactical-night {
       --bg-color: #000000; --card-bg: #110000; --text-color: #ff3b30; --border-color: #aa0000;
       --input-bg: #000000; --input-text: #ff3b30; --result-bg: #220000; --result-text: #ff6b60;
-      --map-bg: #000000; --map-grid: #550000; --map-text: #ff3b30; --list-border: #440000;
+      --map-bg: #000000; --map-grid-1km: rgba(255, 59, 48, 0.6); --map-grid-100m: rgba(255, 59, 48, 0.25); --map-text: rgba(255, 59, 48, 0.9); --list-border: #440000;
       --header-bg: #220000; --header-text: #ff3b30;
     }
     body.tactical-night button { background-color: #330000 !important; color: #ff3b30 !important; border: 1px solid #ff3b30 !important; }
@@ -677,8 +678,14 @@
   function drawMap(highlightP1 = null, highlightP2 = null, resetView = false) {
     let canvas = document.getElementById('mapCanvas'); let ctx = canvas.getContext('2d'); let w = canvas.width, h = canvas.height;
     const style = getComputedStyle(document.body);
-    const cBg = style.getPropertyValue('--map-bg').trim() || "#fff"; const cGrid = style.getPropertyValue('--map-grid').trim() || "#e0e0e0";
-    const cText = style.getPropertyValue('--map-text').trim() || "#888"; const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
+    const cBg = style.getPropertyValue('--map-bg').trim() || "#fff"; 
+    
+    // ★ グリッド線の色を取得
+    const cGrid1km = style.getPropertyValue('--map-grid-1km').trim() || "rgba(0,0,0,0.4)";
+    const cGrid100m = style.getPropertyValue('--map-grid-100m').trim() || "rgba(0,0,0,0.15)";
+    const cText = style.getPropertyValue('--map-text').trim() || "rgba(0,0,0,0.7)";
+    const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
+    
     ctx.fillStyle = cBg; ctx.fillRect(0, 0, w, h);
 
     // ★ 描画範囲の基準にするポイント（登録座標＋地図の四隅）
@@ -727,13 +734,38 @@
     let screenToDy = (Y) => mapState.minDy + ((h - mapState.padding - (Y - mapState.y) / mapState.scale)) / mapState.baseScale;
     let startDx = screenToDx(0) - 1000; let endDx = screenToDx(w) + 1000; let endDy = screenToDy(0) + 1000; let startDy = screenToDy(h) - 1000; 
     if(startDy > endDy) { let tmp = startDy; startDy = endDy; endDy = tmp; } if(startDx > endDx) { let tmp = startDx; startDx = endDx; endDx = tmp; }
+    
     let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000; let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
     let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000; let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
 
-    // グリッド線
-    ctx.strokeStyle = cGrid; ctx.lineWidth = 1; ctx.font = "10px sans-serif"; ctx.fillStyle = cText;
-    ctx.textAlign = "center"; for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); ctx.fillText(pad5(e).substring(0,2), x, h - 5); } }
-    ctx.textAlign = "left"; for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); ctx.fillText(pad5(n).substring(0,2), 5, y + 3); } }
+    // ★ 100m方眼の判定と描画 (ズーム時のみ表示)
+    let pixelPer100m = 100 * mapState.baseScale * mapState.scale;
+    if (pixelPer100m > 12) { // 100mが画面上で12ピクセル以上になったら描画
+      let startE_100 = Math.floor((mapState.refE + startDx) / 100) * 100; let endE_100 = Math.ceil((mapState.refE + endDx) / 100) * 100;
+      let startN_100 = Math.floor((mapState.refN + startDy) / 100) * 100; let endN_100 = Math.ceil((mapState.refN + endDy) / 100) * 100;
+      
+      ctx.strokeStyle = cGrid100m; ctx.lineWidth = 1; ctx.beginPath();
+      for(let e = startE_100; e <= endE_100; e += 100) {
+        if(e % 1000 === 0) continue; // 1km線と被る部分はスキップ
+        let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+      }
+      for(let n = startN_100; n <= endN_100; n += 100) {
+        if(n % 1000 === 0) continue;
+        let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      }
+      ctx.stroke();
+    }
+
+    // ★ 1km方眼の描画 (くっきり太め)
+    ctx.strokeStyle = cGrid1km; ctx.lineWidth = 1.5; ctx.beginPath();
+    for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); } }
+    for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); } }
+    ctx.stroke();
+
+    // ★ 方眼のテキスト(数値)
+    ctx.font = "bold 11px sans-serif"; ctx.fillStyle = cText;
+    ctx.textAlign = "center"; for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.fillText(pad5(e).substring(0,2), x, h - 5); } }
+    ctx.textAlign = "left"; for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.fillText(pad5(n).substring(0,2), 5, y + 4); } }
 
     if (highlightP1 && highlightP2) { ctx.strokeStyle = isNightMode ? '#ff3b30' : 'rgba(0, 122, 255, 0.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n)); ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke(); }
 
