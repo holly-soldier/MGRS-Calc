@@ -12,15 +12,15 @@
     :root {
       --bg-color: #f2f2f7; --card-bg: #ffffff; --text-color: #333333; --border-color: #cccccc;
       --input-bg: #ffffff; --input-text: #000000; --result-bg: #e5f0ff; --result-text: #004080;
-      /* ★ マップ方眼線の色を視認性の高い半透明に変更 */
-      --map-bg: #ffffff; --map-grid-1km: rgba(0, 0, 0, 0.4); --map-grid-100m: rgba(0, 0, 0, 0.15); --map-text: rgba(0, 0, 0, 0.7); --list-border: #eeeeee;
+      /* ★ マップ方眼線の色 (1km, 500m, 100mの3段階) */
+      --map-bg: #ffffff; --map-grid-1km: rgba(0, 0, 0, 0.4); --map-grid-500m: rgba(0, 0, 0, 0.25); --map-grid-100m: rgba(0, 0, 0, 0.1); --map-text: rgba(0, 0, 0, 0.7); --list-border: #eeeeee;
       --header-bg: #007aff; --header-text: #ffffff;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg-color: #000000; --card-bg: #1c1c1e; --text-color: #f5f5f5; --border-color: #444444;
         --input-bg: #2c2c2e; --input-text: #ffffff; --result-bg: #0a244d; --result-text: #66a3ff;
-        --map-bg: #111111; --map-grid-1km: rgba(255, 255, 255, 0.4); --map-grid-100m: rgba(255, 255, 255, 0.15); --map-text: rgba(255, 255, 255, 0.7); --list-border: #333333;
+        --map-bg: #111111; --map-grid-1km: rgba(255, 255, 255, 0.4); --map-grid-500m: rgba(255, 255, 255, 0.25); --map-grid-100m: rgba(255, 255, 255, 0.1); --map-text: rgba(255, 255, 255, 0.7); --list-border: #333333;
       }
     }
     
@@ -28,7 +28,7 @@
     body.tactical-night {
       --bg-color: #000000; --card-bg: #110000; --text-color: #ff3b30; --border-color: #aa0000;
       --input-bg: #000000; --input-text: #ff3b30; --result-bg: #220000; --result-text: #ff6b60;
-      --map-bg: #000000; --map-grid-1km: rgba(255, 59, 48, 0.6); --map-grid-100m: rgba(255, 59, 48, 0.25); --map-text: rgba(255, 59, 48, 0.9); --list-border: #440000;
+      --map-bg: #000000; --map-grid-1km: rgba(255, 59, 48, 0.6); --map-grid-500m: rgba(255, 59, 48, 0.4); --map-grid-100m: rgba(255, 59, 48, 0.15); --map-text: rgba(255, 59, 48, 0.9); --list-border: #440000;
       --header-bg: #220000; --header-text: #ff3b30;
     }
     body.tactical-night button { background-color: #330000 !important; color: #ff3b30 !important; border: 1px solid #ff3b30 !important; }
@@ -682,7 +682,8 @@
     
     // ★ グリッド線の色を取得
     const cGrid1km = style.getPropertyValue('--map-grid-1km').trim() || "rgba(0,0,0,0.4)";
-    const cGrid100m = style.getPropertyValue('--map-grid-100m').trim() || "rgba(0,0,0,0.15)";
+    const cGrid500m = style.getPropertyValue('--map-grid-500m').trim() || "rgba(0,0,0,0.25)";
+    const cGrid100m = style.getPropertyValue('--map-grid-100m').trim() || "rgba(0,0,0,0.1)";
     const cText = style.getPropertyValue('--map-text').trim() || "rgba(0,0,0,0.7)";
     const cMainText = style.getPropertyValue('--text-color').trim() || "#333";
     
@@ -740,29 +741,68 @@
 
     // ★ 100m方眼の判定と描画 (ズーム時のみ表示)
     let pixelPer100m = 100 * mapState.baseScale * mapState.scale;
-    if (pixelPer100m > 12) { // 100mが画面上で12ピクセル以上になったら描画
+    if (pixelPer100m > 12) { 
       let startE_100 = Math.floor((mapState.refE + startDx) / 100) * 100; let endE_100 = Math.ceil((mapState.refE + endDx) / 100) * 100;
       let startN_100 = Math.floor((mapState.refN + startDy) / 100) * 100; let endN_100 = Math.ceil((mapState.refN + endDy) / 100) * 100;
       
+      // 1. 標準の100m線 (1kmと500m以外)
       ctx.strokeStyle = cGrid100m; ctx.lineWidth = 1; ctx.beginPath();
       for(let e = startE_100; e <= endE_100; e += 100) {
-        if(e % 1000 === 0) continue; // 1km線と被る部分はスキップ
+        if(e % 500 === 0) continue; 
         let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
       }
       for(let n = startN_100; n <= endN_100; n += 100) {
-        if(n % 1000 === 0) continue;
+        if(n % 500 === 0) continue;
         let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
       }
       ctx.stroke();
+
+      // 2. 500m線 (1km以外) - 少し太く濃くする
+      ctx.strokeStyle = cGrid500m; ctx.lineWidth = 1.2; ctx.beginPath();
+      for(let e = startE_100; e <= endE_100; e += 100) {
+        if(e % 500 === 0 && e % 1000 !== 0) {
+          let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+        }
+      }
+      for(let n = startN_100; n <= endN_100; n += 100) {
+        if(n % 500 === 0 && n % 1000 !== 0) {
+          let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+        }
+      }
+      ctx.stroke();
+
+      // 3. 1〜9のナンバリング (さらにズームした時だけ表示)
+      if (pixelPer100m > 20) {
+        ctx.font = "9px sans-serif"; ctx.fillStyle = cText;
+        ctx.textAlign = "left"; 
+        for(let e = startE_100; e <= endE_100; e += 100) {
+          if(e % 1000 === 0) continue;
+          let x = getX_real(e); 
+          if(x > 0 && x < w) { 
+            let digit = Math.floor(Math.abs(e % 1000) / 100);
+            ctx.fillText(digit, x + 3, h - 15); // 下端 (1kmラベルの上)
+            ctx.fillText(digit, x + 3, 10);     // 上端
+          }
+        }
+        for(let n = startN_100; n <= endN_100; n += 100) {
+          if(n % 1000 === 0) continue;
+          let y = getY_real(n); 
+          if(y > 0 && y < h) { 
+            let digit = Math.floor(Math.abs(n % 1000) / 100);
+            ctx.fillText(digit, 22, y - 2);     // 左端 (1kmラベルの右)
+            ctx.fillText(digit, w - 10, y - 2); // 右端
+          }
+        }
+      }
     }
 
-    // ★ 1km方眼の描画 (くっきり太め)
+    // ★ 1km方眼の描画 (一番くっきり)
     ctx.strokeStyle = cGrid1km; ctx.lineWidth = 1.5; ctx.beginPath();
     for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); } }
     for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); } }
     ctx.stroke();
 
-    // ★ 方眼のテキスト(数値)
+    // ★ 1km方眼のテキスト(数値)
     ctx.font = "bold 11px sans-serif"; ctx.fillStyle = cText;
     ctx.textAlign = "center"; for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.fillText(pad5(e).substring(0,2), x, h - 5); } }
     ctx.textAlign = "left"; for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.fillText(pad5(n).substring(0,2), 5, y + 4); } }
