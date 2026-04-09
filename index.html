@@ -40,13 +40,12 @@
     }
     body.tactical-night button { background-color: #330000 !important; color: #ff3b30 !important; border: 1px solid #ff3b30 !important; }
     body.tactical-night header { border-bottom: 1px solid #ff3b30; }
-    body.tactical-night input, body.tactical-night textarea { border: 1px solid #ff0000; }
+    body.tactical-night input, body.tactical-night textarea, body.tactical-night select { border: 1px solid #ff0000; }
     body.tactical-night .drag-handle { color: #aa0000; }
 
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; transition: background-color 0.3s; }
     header { background-color: var(--header-bg); color: var(--header-text); padding: 15px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
     
-    /* 下部ナビゲーションのスペースを確保 */
     .container { padding: 15px; padding-bottom: calc(env(safe-area-inset-bottom) + 95px); } 
     
     input[type="text"], input[type="number"], input[type="file"], textarea, select { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
@@ -76,20 +75,10 @@
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); line-height: 1.5; }
     .hidden { display: none !important; }
 
-    /* ★ カラーパレット (6色×2行のグリッドに変更) */
     .color-palette-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
     .color-palette-container > span { font-size: 14px; font-weight: bold; color: var(--text-color); }
-    .color-palette { 
-      display: grid; 
-      grid-template-columns: repeat(6, 1fr); 
-      gap: 12px 5px; 
-      justify-items: center; 
-      width: 100%;
-    }
-    .color-swatch { 
-      width: 36px; height: 36px; 
-      border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); box-sizing: border-box; transition: 0.1s; 
-    }
+    .color-palette { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 5px; justify-items: center; width: 100%; }
+    .color-swatch { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); box-sizing: border-box; transition: 0.1s; }
     .color-swatch.selected { border: 3px solid var(--text-color); transform: scale(1.15); box-shadow: 0 0 8px rgba(0,0,0,0.3); }
     
     .quick-save { display: flex; gap: 10px; align-items: center; justify-content: center; }
@@ -108,49 +97,13 @@
     .map-container { position: relative; width: 100%; overflow: hidden; }
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; transition: background-color 0.3s; }
 
-    /* ========== ★ 下部タブナビゲーション (余白調整) ========== */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background-color: var(--card-bg);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      padding-top: 8px;
-      /* iPhoneのホームバー(Safe Area)＋10pxの余白を設ける */
-      padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
-      z-index: 1000;
-    }
-    .nav-item {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 5px 2px;
-      color: var(--text-color);
-      opacity: 0.4;
-      cursor: pointer;
-      transition: 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .nav-item.active {
-      opacity: 1;
-      color: #007aff;
-    }
-    .tactical-night .nav-item.active {
-      color: #ff3b30;
-    }
-    .nav-icon {
-      font-size: 22px;
-      margin-bottom: 4px;
-      line-height: 1;
-    }
-    .tactical-night .nav-icon {
-      filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(400%) brightness(0.8);
-    }
-    .nav-text {
-      font-size: 10px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; padding-top: 8px; padding-bottom: calc(env(safe-area-inset-bottom) + 10px); z-index: 1000; }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px 2px; color: var(--text-color); opacity: 0.4; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
+    .nav-item.active { opacity: 1; color: #007aff; }
+    .tactical-night .nav-item.active { color: #ff3b30; }
+    .nav-icon { font-size: 22px; margin-bottom: 4px; line-height: 1; }
+    .tactical-night .nav-icon { filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(400%) brightness(0.8); }
+    .nav-text { font-size: 10px; font-weight: bold; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -210,12 +163,26 @@
 
   <div id="func3" class="view hidden">
     <div class="card">
-      <h3>観測点-A</h3>
-      <div class="input-group"><input type="text" inputmode="numeric" id="f3_p1x" placeholder="E座標"><input type="text" inputmode="numeric" id="f3_p1y" placeholder="N座標"><input type="number" id="f3_az1" placeholder="目標への方位角 (mil)"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
+        <h3 style="margin:0;">観測点-A</h3>
+        <button class="btn-gps" onclick="getGPS('f3_p1x', 'f3_p1y')">📍GPS取得</button>
+      </div>
+      <div class="input-group">
+        <input type="text" inputmode="numeric" id="f3_p1x" placeholder="E座標">
+        <input type="text" inputmode="numeric" id="f3_p1y" placeholder="N座標">
+        <input type="number" id="f3_az1" placeholder="目標への方位角 (mil)">
+      </div>
     </div>
     <div class="card">
-      <h3>観測点-B</h3>
-      <div class="input-group"><input type="text" inputmode="numeric" id="f3_p2x" placeholder="E座標"><input type="text" inputmode="numeric" id="f3_p2y" placeholder="N座標"><input type="number" id="f3_az2" placeholder="目標への方位角 (mil)"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
+        <h3 style="margin:0;">観測点-B</h3>
+        <button class="btn-gps" onclick="getGPS('f3_p2x', 'f3_p2y')">📍GPS取得</button>
+      </div>
+      <div class="input-group">
+        <input type="text" inputmode="numeric" id="f3_p2x" placeholder="E座標">
+        <input type="text" inputmode="numeric" id="f3_p2y" placeholder="N座標">
+        <input type="number" id="f3_az2" placeholder="目標への方位角 (mil)">
+      </div>
     </div>
     <button onclick="calcF3()">計算実行</button>
     <div id="res3" class="result hidden"></div>
@@ -224,12 +191,26 @@
   <div id="func4" class="view hidden">
     <div class="card">
       <p style="font-size:14px; color:var(--text-color); margin-top:0; opacity: 0.8;">未知の現在地から、既知の2点へ方位角を測定し、現在地を求めます。</p>
-      <h3>既知点-A</h3>
-      <div class="input-group"><input type="text" inputmode="numeric" id="f4_p1x" placeholder="E座標"><input type="text" inputmode="numeric" id="f4_p1y" placeholder="N座標"><input type="number" id="f4_az1" placeholder="Aへの測定方位角 (mil)"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">既知点-A</h3>
+      </div>
+      <div class="input-group">
+        <select id="f4_sel1" onchange="loadPointToInputs('f4_sel1', 'f4_p1x', 'f4_p1y')"></select>
+        <input type="text" inputmode="numeric" id="f4_p1x" placeholder="E座標">
+        <input type="text" inputmode="numeric" id="f4_p1y" placeholder="N座標">
+        <input type="number" id="f4_az1" placeholder="Aへの測定方位角 (mil)">
+      </div>
     </div>
     <div class="card">
-      <h3>既知点-B</h3>
-      <div class="input-group"><input type="text" inputmode="numeric" id="f4_p2x" placeholder="E座標"><input type="text" inputmode="numeric" id="f4_p2y" placeholder="N座標"><input type="number" id="f4_az2" placeholder="Bへの測定方位角 (mil)"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">既知点-B</h3>
+      </div>
+      <div class="input-group">
+        <select id="f4_sel2" onchange="loadPointToInputs('f4_sel2', 'f4_p2x', 'f4_p2y')"></select>
+        <input type="text" inputmode="numeric" id="f4_p2x" placeholder="E座標">
+        <input type="text" inputmode="numeric" id="f4_p2y" placeholder="N座標">
+        <input type="number" id="f4_az2" placeholder="Bへの測定方位角 (mil)">
+      </div>
     </div>
     <button onclick="calcF4()">計算実行</button>
     <div id="res4" class="result hidden"></div>
@@ -399,7 +380,6 @@
 
   if (isNightMode) document.body.classList.add('tactical-night');
 
-  // ★「桃（ピンク）」を桜色（#ff9eb5）に変更
   const COLOR_PALETTE = [
     { name: '赤', hex: '#ff3b30' }, { name: '青', hex: '#007aff' },
     { name: '緑', hex: '#34c759' }, { name: '黄', hex: '#ffcc00' },
@@ -473,7 +453,6 @@
     });
   }
 
-  // ★ parseColorStr内にも新しい桜色（#ff9eb5）を紐づけ
   function parseColorStr(c) {
     if (!c) return lastColor; let m = c.trim().toLowerCase();
     const cmap = { 
@@ -553,6 +532,33 @@
     }, err => { alert("GPS取得失敗: " + err.message); document.getElementById(eId).value = ""; document.getElementById(nId).value = ""; }, { enableHighAccuracy: true });
   }
 
+  // ★ 登録座標呼び出し機能
+  function loadPointToInputs(selId, eId, nId) {
+    let id = document.getElementById(selId).value;
+    if(!id) return;
+    let p = savedPoints.find(pt => pt.id == parseInt(id));
+    if(p) {
+      document.getElementById(eId).value = pad5(p.e);
+      document.getElementById(nId).value = pad5(p.n);
+    }
+  }
+
+  // ★ すべてのセレクトボックスを更新
+  function updateAllDropdowns() {
+    let html = '<option value="">--- 登録座標から選択 ---</option>'; 
+    savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
+    
+    let ids = ['map_start', 'map_end', 'f4_sel1', 'f4_sel2'];
+    ids.forEach(id => {
+      let el = document.getElementById(id);
+      if(el) {
+        let val = el.value;
+        el.innerHTML = html;
+        if(val && savedPoints.find(p => p.id == parseInt(val))) el.value = val;
+      }
+    });
+  }
+
   function switchView(selectedId) {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById(selectedId).classList.remove('hidden');
@@ -563,13 +569,13 @@
 
     syncColorPickers();
     if (selectedId === 'func6') updateSavedList();
-    if (selectedId === 'func7') { 
-      updateMapDropdowns(); 
-      if (mapOverlay) {
+    if (selectedId === 'func4' || selectedId === 'func7') { 
+      updateAllDropdowns(); 
+      if (selectedId === 'func7' && mapOverlay) {
          document.getElementById('map_tl_e').value = pad5(mapOverlay.tl_e); document.getElementById('map_tl_n').value = pad5(mapOverlay.tl_n);
          document.getElementById('map_br_e').value = pad5(mapOverlay.br_e); document.getElementById('map_br_n').value = pad5(mapOverlay.br_n);
       }
-      drawMap(null, null, true); 
+      if (selectedId === 'func7') drawMap(null, null, true); 
     }
     window.scrollTo(0, 0);
   }
@@ -605,7 +611,7 @@
     let existing = savedPoints.find(p => p.name === name);
     if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = z; existing.color = color; alert("上書き登録しました"); } 
     else { savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), z: z, color: color }); alert("登録しました"); }
-    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById(inputId).value = ""; updateSavedList(); updateMapDropdowns();
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById(inputId).value = ""; updateSavedList(); updateAllDropdowns();
   }
 
   function calcF1() {
@@ -667,7 +673,7 @@
     let existing = savedPoints.find(p => p.name === name);
     if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = z; existing.color = color; alert("上書き登録しました"); } 
     else { savedPoints.push({ id: Date.now(), name: name, e: Number(x), n: Number(y), z: z, color: color }); alert("登録しました"); }
-    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById(inputId).value = ""; updateSavedList(); updateMapDropdowns();
+    localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById(inputId).value = ""; updateSavedList(); updateAllDropdowns();
   }
 
   function calcF5() {
@@ -703,7 +709,7 @@
        }
     }
     if (addedCount > 0 || updatedCount > 0) { 
-      localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); 
+      localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); updateAllDropdowns(); drawMap(null, null, true); 
       alert(`${addedCount}件を追加、${updatedCount}件を上書きしました！`); 
       document.getElementById('io_text').value = ""; toggleBatchIO(); 
     } else { 
@@ -720,7 +726,7 @@
     document.getElementById('io_text').value = out;
   }
   
-  function deleteAllPoints() { if (savedPoints.length === 0) return; if (confirm("本当にすべて削除しますか？")) { savedPoints = []; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); alert("削除しました。"); } }
+  function deleteAllPoints() { if (savedPoints.length === 0) return; if (confirm("本当にすべて削除しますか？")) { savedPoints = []; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); updateAllDropdowns(); drawMap(null, null, true); alert("削除しました。"); } }
 
   function savePointManual() {
     let name = document.getElementById('f6_name').value; let x = parseCoord(document.getElementById('f6_x').value); let y = parseCoord(document.getElementById('f6_y').value); let z = parseZ(document.getElementById('f6_z').value); let color = document.getElementById('f6_color').value;
@@ -735,7 +741,7 @@
         if (existing) { existing.e = x; existing.n = y; existing.z = z; existing.color = color; alert("上書き登録しました"); } 
         else { savedPoints.push({ id: Date.now(), name: name, e: x, n: y, z: z, color: color }); }
     }
-    cancelEdit(); localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true);
+    cancelEdit(); localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); updateAllDropdowns(); drawMap(null, null, true);
   }
 
   function editPoint(id) {
@@ -748,7 +754,7 @@
   function cancelEdit() {
     editingId = null; document.getElementById('edit_title').innerText = "座標を手動登録"; document.getElementById('f6_name').value = ""; document.getElementById('f6_x').value = ""; document.getElementById('f6_y').value = ""; document.getElementById('f6_z').value = ""; document.getElementById('btn_manual_save').innerText = "登録"; document.getElementById('btn_manual_cancel').classList.add('hidden');
   }
-  function deletePoint(id) { savedPoints = savedPoints.filter(p => p.id !== id); localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); }
+  function deletePoint(id) { savedPoints = savedPoints.filter(p => p.id !== id); localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); updateAllDropdowns(); drawMap(null, null, true); }
 
   function applySort() {
     let mode = document.getElementById('sort_select').value; if (mode === 'manual') return;
@@ -776,7 +782,7 @@
     if (!dragEl) return; dragEl.classList.remove('dragging'); dragEl = null;
     const items = document.querySelectorAll('#savedList .list-item'); let newArray = [];
     items.forEach(item => { const id = parseInt(item.getAttribute('data-id')); const point = savedPoints.find(p => p.id === id); if(point) newArray.push(point); });
-    savedPoints = newArray; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById('sort_select').value = 'manual'; updateMapDropdowns();
+    savedPoints = newArray; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById('sort_select').value = 'manual'; updateAllDropdowns();
   });
 
   function saveMapOverlay() {
@@ -830,12 +836,6 @@
 
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
-
-  function updateMapDropdowns() {
-    let start = document.getElementById('map_start'); let end = document.getElementById('map_end');
-    let html = '<option value="">--- 選択してください ---</option>'; savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
-    start.innerHTML = html; end.innerHTML = html;
-  }
 
   function calcMap() {
     let sId = document.getElementById('map_start').value; let eId = document.getElementById('map_end').value; if (!sId || !eId) return;
@@ -1026,19 +1026,13 @@
   }, { passive: false });
   canvas.addEventListener('touchend', (e) => { e.preventDefault(); if (e.touches.length < 2) initialPinchDist = null; if (e.touches.length === 0) isDragging = false; });
 
-  // 初期化
   renderColorPalette('f6_color_palette', 'f6_color');
   updateSavedList();
 
-  // ★ ページロード時に現在選択されているタブ（メニューの初期値）に合わせて表示を切り替える
   document.addEventListener('DOMContentLoaded', () => {
     let currentSelect = document.getElementById('menu');
-    if(currentSelect && currentSelect.value) {
-      switchView(currentSelect.value);
-    } else {
-      switchView('func1'); // デフォルト
-    }
-    // 古いセレクトボックスメニューは非表示にする
+    if(currentSelect && currentSelect.value) { switchView(currentSelect.value); } 
+    else { switchView('func1'); }
     if(currentSelect) currentSelect.style.display = 'none';
   });
 </script>
