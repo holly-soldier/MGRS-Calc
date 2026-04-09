@@ -12,7 +12,6 @@
     :root {
       --bg-color: #f2f2f7; --card-bg: #ffffff; --text-color: #333333; --border-color: #cccccc;
       --input-bg: #ffffff; --input-text: #000000; --result-bg: #e5f0ff; --result-text: #004080;
-      /* ★ 方眼線の色と、背景同化を防ぐ「縁取り(Halo)」の色 */
       --map-bg: #ffffff; 
       --map-grid-1km: rgba(0, 0, 0, 0.4); --map-grid-500m: rgba(0, 0, 0, 0.25); --map-grid-100m: rgba(0, 0, 0, 0.1); 
       --map-text: rgba(0, 0, 0, 0.8); --list-border: #eeeeee;
@@ -30,7 +29,6 @@
       }
     }
     
-    /* ★ タクティカル・ナイトモード (赤色UI) ★ */
     body.tactical-night {
       --bg-color: #000000; --card-bg: #110000; --text-color: #ff3b30; --border-color: #aa0000;
       --input-bg: #000000; --input-text: #ff3b30; --result-bg: #220000; --result-text: #ff6b60;
@@ -42,14 +40,16 @@
     }
     body.tactical-night button { background-color: #330000 !important; color: #ff3b30 !important; border: 1px solid #ff3b30 !important; }
     body.tactical-night header { border-bottom: 1px solid #ff3b30; }
-    body.tactical-night input, body.tactical-night select, body.tactical-night textarea { border: 1px solid #ff0000; }
+    body.tactical-night input, body.tactical-night textarea { border: 1px solid #ff0000; }
     body.tactical-night .drag-handle { color: #aa0000; }
 
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; transition: background-color 0.3s; }
     header { background-color: var(--header-bg); color: var(--header-text); padding: 15px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
-    .container { padding: 15px; }
     
-    select, input[type="text"], input[type="number"], input[type="file"], textarea { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
+    /* 下部ナビゲーションのスペースを確保 */
+    .container { padding: 15px; padding-bottom: 85px; } 
+    
+    input[type="text"], input[type="number"], input[type="file"], textarea, select { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
     select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
     textarea { width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; border-radius: 5px; resize: vertical; min-height: 120px; margin-bottom: 10px; font-family: monospace; border:1px solid var(--border-color); }
     input[type="file"] { padding: 8px; border-radius: 5px; box-sizing: border-box; }
@@ -58,7 +58,8 @@
     .card h3 { margin-top: 0; font-size: 16px; color: var(--text-color); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-    .input-group input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border-radius: 5px; }
+    .input-group input, .input-group select { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border-radius: 5px; }
+    .input-group select { margin-bottom: 0; }
     
     .route-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
     .route-row input { flex: 1; min-width: 0; padding: 12px; font-size: 16px; border-radius: 5px; box-sizing: border-box; }
@@ -75,9 +76,12 @@
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); line-height: 1.5; }
     .hidden { display: none !important; }
 
-    .color-select-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px; }
-    .color-select-row span { font-size: 16px; font-weight: bold; color: var(--text-color); }
-    .color-picker { width: 44px; height: 44px; padding: 0; border: none; border-radius: 5px; background: none; cursor: pointer; flex-shrink: 0; }
+    /* ★ カラーパレット */
+    .color-palette-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+    .color-palette-container > span { font-size: 14px; font-weight: bold; color: var(--text-color); }
+    .color-palette { display: flex; flex-wrap: wrap; gap: 10px; }
+    .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); box-sizing: border-box; transition: 0.1s; }
+    .color-swatch.selected { border: 3px solid var(--text-color); transform: scale(1.15); box-shadow: 0 0 8px rgba(0,0,0,0.3); }
     
     .quick-save { display: flex; gap: 10px; align-items: center; justify-content: center; }
     .quick-save input[type="text"] { padding: 10px; border-radius: 5px; font-size: 16px; flex: 1; font-family: sans-serif; }
@@ -94,6 +98,49 @@
 
     .map-container { position: relative; width: 100%; overflow: hidden; }
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; transition: background-color 0.3s; }
+
+    /* ========== ★ 下部タブナビゲーション ========== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background-color: var(--card-bg);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 1000;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 10px 2px;
+      color: var(--text-color);
+      opacity: 0.4;
+      cursor: pointer;
+      transition: 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-item.active {
+      opacity: 1;
+      color: #007aff;
+    }
+    .tactical-night .nav-item.active {
+      color: #ff3b30;
+    }
+    .nav-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+    /* 暗視モード時は絵文字も赤黒くする */
+    .tactical-night .nav-icon {
+      filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(400%) brightness(0.8);
+    }
+    .nav-text {
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -104,15 +151,6 @@
 </header>
 
 <div class="container">
-  <select id="menu" onchange="switchView()">
-    <option value="func1">1. 座標対座標</option>
-    <option value="func2">2. 極座標</option>
-    <option value="func3">3. 前方交会法</option>
-    <option value="func4">4. 後方交会法</option>
-    <option value="func5">5. トラバース計算</option>
-    <option value="func6">6. 座標の登録・一覧・GPS</option>
-    <option value="func7">7. マップ (1km方眼)</option>
-  </select>
 
   <div id="func1" class="view">
     <div class="card">
@@ -225,10 +263,13 @@
         <h3 id="edit_title" style="margin:0;">座標を手動登録</h3>
         <button class="btn-gps" onclick="getGPS('f6_x', 'f6_y', 'f6_z')">📍現在地</button>
       </div>
-      <div class="color-select-row">
+      
+      <div class="color-palette-container">
         <span>マップ表示色</span>
-        <input type="color" id="f6_color" class="color-picker">
+        <div class="color-palette" id="f6_color_palette"></div>
+        <input type="hidden" id="f6_color" value="#ff3b30">
       </div>
+
       <div class="input-group">
         <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
         <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標 (必須)">
@@ -300,6 +341,37 @@
   </div>
 </div>
 
+<nav class="bottom-nav">
+  <div class="nav-item active" id="nav_func1" onclick="switchView('func1')">
+    <div class="nav-icon">📏</div>
+    <div class="nav-text">座標間</div>
+  </div>
+  <div class="nav-item" id="nav_func2" onclick="switchView('func2')">
+    <div class="nav-icon">🧭</div>
+    <div class="nav-text">極座標</div>
+  </div>
+  <div class="nav-item" id="nav_func3" onclick="switchView('func3')">
+    <div class="nav-icon">📐</div>
+    <div class="nav-text">前方</div>
+  </div>
+  <div class="nav-item" id="nav_func4" onclick="switchView('func4')">
+    <div class="nav-icon">📍</div>
+    <div class="nav-text">後方</div>
+  </div>
+  <div class="nav-item" id="nav_func5" onclick="switchView('func5')">
+    <div class="nav-icon">🥾</div>
+    <div class="nav-text">経路</div>
+  </div>
+  <div class="nav-item" id="nav_func6" onclick="switchView('func6')">
+    <div class="nav-icon">📋</div>
+    <div class="nav-text">登録</div>
+  </div>
+  <div class="nav-item" id="nav_func7" onclick="switchView('func7')">
+    <div class="nav-icon">🗺️</div>
+    <div class="nav-text">マップ</div>
+  </div>
+</nav>
+
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
@@ -316,6 +388,93 @@
   if (mapOverlay) { mapImageObj.src = mapOverlay.dataUrl; }
 
   if (isNightMode) document.body.classList.add('tactical-night');
+
+  const COLOR_PALETTE = [
+    { name: '赤', hex: '#ff3b30' }, { name: '青', hex: '#007aff' },
+    { name: '緑', hex: '#34c759' }, { name: '黄', hex: '#ffcc00' },
+    { name: '黒', hex: '#000000' }, { name: '白', hex: '#ffffff' },
+    { name: '紫', hex: '#af52de' }, { name: '橙', hex: '#ff9500' },
+    { name: '茶', hex: '#a2845e' }, { name: '灰', hex: '#8e8e93' },
+    { name: '水', hex: '#5ac8fa' }, { name: '桃', hex: '#ff2d55' }
+  ];
+
+  function hexToRgb(hex) {
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+  }
+
+  function getClosestKanjiColor(hexStr) {
+    if(!hexStr) return '赤';
+    let directMatch = COLOR_PALETTE.find(c => c.hex.toLowerCase() === hexStr.toLowerCase());
+    if(directMatch) return directMatch.name;
+
+    let targetRgb = hexToRgb(hexStr);
+    if(!targetRgb) return '赤'; 
+    
+    let closest = COLOR_PALETTE[0];
+    let minDistance = Infinity;
+    
+    for(let color of COLOR_PALETTE) {
+      let rgb = hexToRgb(color.hex);
+      if(!rgb) continue;
+      let dist = Math.pow(targetRgb.r - rgb.r, 2) + Math.pow(targetRgb.g - rgb.g, 2) + Math.pow(targetRgb.b - rgb.b, 2);
+      if(dist < minDistance) { minDistance = dist; closest = color; }
+    }
+    return closest.name;
+  }
+
+  function renderColorPalette(containerId, inputId) {
+    let container = document.getElementById(containerId);
+    if(!container) return;
+    let html = "";
+    COLOR_PALETTE.forEach(c => {
+      html += `<div class="color-swatch" data-hex="${c.hex}" style="background-color: ${c.hex};" onclick="selectColor('${inputId}', '${c.hex}')" title="${c.name}"></div>`;
+    });
+    container.innerHTML = html;
+    updateSelectedSwatch(inputId);
+  }
+
+  function selectColor(inputId, hex) {
+    let el = document.getElementById(inputId);
+    if(el) el.value = hex;
+    syncColorPickers(hex); 
+  }
+
+  function syncColorPickers(newColor) {
+    if(newColor) { lastColor = newColor; localStorage.setItem('mgrsLastColor', lastColor); }
+    document.querySelectorAll('input[type="hidden"][id$="_color"]').forEach(el => {
+      el.value = lastColor;
+      updateSelectedSwatch(el.id);
+    });
+  }
+
+  function updateSelectedSwatch(inputId) {
+    let val = document.getElementById(inputId)?.value || lastColor;
+    let containerId = inputId + '_palette';
+    let container = document.getElementById(containerId);
+    if(!container) return;
+    container.querySelectorAll('.color-swatch').forEach(sw => {
+      if(sw.getAttribute('data-hex').toLowerCase() === val.toLowerCase()) {
+        sw.classList.add('selected');
+      } else {
+        sw.classList.remove('selected');
+      }
+    });
+  }
+
+  function parseColorStr(c) {
+    if (!c) return lastColor; let m = c.trim().toLowerCase();
+    const cmap = { 
+      '赤':'#ff3b30', 'red':'#ff3b30', '青':'#007aff', 'blue':'#007aff', 
+      '緑':'#34c759', 'green':'#34c759', '黄':'#ffcc00', 'yellow':'#ffcc00', 
+      '黒':'#000000', 'black':'#000000', '白':'#ffffff', 'white':'#ffffff', 
+      '紫':'#af52de', 'purple':'#af52de', '橙':'#ff9500', 'orange':'#ff9500',
+      '茶':'#a2845e', 'brown':'#a2845e', '灰':'#8e8e93', 'gray':'#8e8e93',
+      '水':'#5ac8fa', 'cyan':'#5ac8fa', '桃':'#ff2d55', 'pink':'#ff2d55'
+    };
+    if (cmap[m]) return cmap[m];
+    if (m.startsWith('#') && (m.length === 4 || m.length === 7)) return m; return lastColor;
+  }
 
   function toggleNightMode() {
     isNightMode = !isNightMode;
@@ -352,7 +511,6 @@
   };
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
-  // ===== GPS / UTM 変換 =====
   function latLonToUTM(lat, lon) {
     const a = 6378137.0; const f = 1 / 298.257223563; const k0 = 0.9996;
     const eccSquared = 2*f - f*f; const zoneNumber = Math.floor((lon + 180) / 6) + 1;
@@ -383,23 +541,21 @@
     }, err => { alert("GPS取得失敗: " + err.message); document.getElementById(eId).value = ""; document.getElementById(nId).value = ""; }, { enableHighAccuracy: true });
   }
 
-  function parseColorStr(c) {
-    if (!c) return lastColor; let m = c.trim().toLowerCase();
-    const cmap = { '赤':'#ff3b30', 'red':'#ff3b30', '青':'#007aff', 'blue':'#007aff', '緑':'#34c759', 'green':'#34c759', '黄':'#ffcc00', 'yellow':'#ffcc00', '黒':'#000000', 'black':'#000000', '白':'#ffffff', 'white':'#ffffff', '紫':'#af52de', '橙':'#ff9500' };
-    if (cmap[m]) return cmap[m];
-    if (m.startsWith('#') && (m.length === 4 || m.length === 7)) return m; return lastColor;
-  }
-  function syncColorPickers(newColor) {
-    if(newColor) { lastColor = newColor; localStorage.setItem('mgrsLastColor', lastColor); }
-    document.querySelectorAll('.color-picker').forEach(el => { el.value = lastColor; });
-  }
-  function switchView() {
+  // ★ 画面切り替えのロジック（タブ対応版）
+  function switchView(selectedId) {
+    // すべてのビューを隠す
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-    let selected = document.getElementById('menu').value;
-    document.getElementById(selected).classList.remove('hidden');
+    // 選択されたビューを表示
+    document.getElementById(selectedId).classList.remove('hidden');
+
+    // 下部タブのハイライトを更新
+    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+    let activeNav = document.getElementById('nav_' + selectedId);
+    if(activeNav) activeNav.classList.add('active');
+
     syncColorPickers();
-    if (selected === 'func6') updateSavedList();
-    if (selected === 'func7') { 
+    if (selectedId === 'func6') updateSavedList();
+    if (selectedId === 'func7') { 
       updateMapDropdowns(); 
       if (mapOverlay) {
          document.getElementById('map_tl_e').value = pad5(mapOverlay.tl_e); document.getElementById('map_tl_n').value = pad5(mapOverlay.tl_n);
@@ -407,6 +563,8 @@
       }
       drawMap(null, null, true); 
     }
+    // 画面の一番上にスクロール
+    window.scrollTo(0, 0);
   }
 
   function calcData(sx, sy, sz, ex, ey, ez) {
@@ -423,12 +581,18 @@
   function getSaveUI(inputId, x, y, z = null) {
     let zArg = z !== null ? z : 'null';
     return `<div style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px;">
-              <div class="color-select-row" style="margin-bottom:10px;"><span>マップ表示色</span><input type="color" id="${inputId}_color" class="color-picker" onchange="syncColorPickers(this.value)"></div>
+              <div class="color-palette-container">
+                <span>マップ表示色</span>
+                <div class="color-palette" id="${inputId}_color_palette"></div>
+                <input type="hidden" id="${inputId}_color" value="${lastColor}">
+              </div>
               <div class="quick-save"><input type="text" id="${inputId}" placeholder="名称"><button onclick="quickSave('${inputId}', ${x}, ${y}, ${zArg})">登録</button></div>
             </div>`;
   }
+
   function quickSave(inputId, x, y, z = null) {
-    let name = document.getElementById(inputId).value; let color = document.getElementById(inputId + '_color') ? document.getElementById(inputId + '_color').value : lastColor;
+    let name = document.getElementById(inputId).value; 
+    let color = document.getElementById(inputId + '_color') ? document.getElementById(inputId + '_color').value : lastColor;
     if (!name) { alert("名称を入力してください"); return; }
     syncColorPickers(color);
     let existing = savedPoints.find(p => p.name === name);
@@ -456,7 +620,8 @@
     let targetZ = null; let zStrInfo = "";
     if (z !== null && elv !== null) { let dz = dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE)); targetZ = z + dz; zStrInfo = `  H: ${Math.round(targetZ)}`; }
     let res = document.getElementById('res2'); res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}${zStrInfo}` + getSaveUI('qname_f2', targetX, targetY, targetZ); 
-    res.classList.remove('hidden'); syncColorPickers();
+    res.classList.remove('hidden'); 
+    renderColorPalette('qname_f2_color_palette', 'qname_f2_color'); syncColorPickers();
   }
 
   function calcF3() {
@@ -467,7 +632,8 @@
     let res = document.getElementById('res3');
     if (Math.abs(tan1 - tan2) < 0.0001) res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
     else { let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y; res.innerHTML = `交点座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f3', intX, intY); }
-    res.classList.remove('hidden'); syncColorPickers();
+    res.classList.remove('hidden'); 
+    renderColorPalette('qname_f3_color_palette', 'qname_f3_color'); syncColorPickers();
   }
 
   function calcF4() {
@@ -478,7 +644,8 @@
     let res = document.getElementById('res4');
     if (Math.abs(tan1 - tan2) < 0.0001) res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
     else { let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y; res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY); }
-    res.classList.remove('hidden'); syncColorPickers();
+    res.classList.remove('hidden'); 
+    renderColorPalette('qname_f4_color_palette', 'qname_f4_color'); syncColorPickers();
   }
 
   function addRouteRow() { let row = document.createElement('div'); row.className = 'route-row'; row.innerHTML = `<input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`; document.getElementById('routeList').appendChild(row); }
@@ -488,7 +655,7 @@
   };
 
   function quickSaveTraverse(inputId, x, y, z = null) {
-    let name = document.getElementById(inputId).value; let colorInput = document.getElementById('f5_color'); let color = colorInput ? colorInput.value : lastColor;
+    let name = document.getElementById(inputId).value; let color = document.getElementById('f5_color') ? document.getElementById('f5_color').value : lastColor;
     if (!name) { alert("名称を入力してください"); return; } syncColorPickers(color);
     let existing = savedPoints.find(p => p.name === name);
     if(existing) { existing.e = Number(x); existing.n = Number(y); existing.z = z; existing.color = color; alert("上書き登録しました"); } 
@@ -499,17 +666,17 @@
   function calcF5() {
     let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value); if(cx===null || cy===null) return;
     let azInputs = document.querySelectorAll('.r_az'); let distInputs = document.querySelectorAll('.r_dist');
-    let html = `<div class="color-select-row" style="margin-bottom:15px; padding-bottom:10px;"><span>一括マップ表示色</span><input type="color" id="f5_color" class="color-picker" onchange="syncColorPickers(this.value)"></div>`;
+    let html = `<div class="color-palette-container"><span>一括マップ表示色</span><div class="color-palette" id="f5_color_palette"></div><input type="hidden" id="f5_color" value="${lastColor}"></div>`;
     html += getCompactSaveUI('qname_f5_0', '始点', cx, cy);
     for (let i = 0; i < azInputs.length; i++) {
       let az = Number(azInputs[i].value); let dist = Number(distInputs[i].value); if (azInputs[i].value === "" || distInputs[i].value === "") continue;
       cx = cx + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); cy = cy + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
       html += getCompactSaveUI(`qname_f5_${i+1}`, `経由点${i+1}`, cx, cy);
     }
-    document.getElementById('res5').innerHTML = html; document.getElementById('res5').classList.remove('hidden'); syncColorPickers();
+    document.getElementById('res5').innerHTML = html; document.getElementById('res5').classList.remove('hidden'); 
+    renderColorPalette('f5_color_palette', 'f5_color'); syncColorPickers();
   }
 
-  // ★テキスト一括入出力
   function importPoints() {
     let text = document.getElementById('io_text').value; if (!text.trim()) { alert("テキストを入力してください"); return; }
     let lines = text.split('\n'); let addedCount = 0; let updatedCount = 0;
@@ -539,9 +706,13 @@
 
   function exportPoints() {
     if (savedPoints.length === 0) { alert("書き出すデータがありません。"); return; }
-    let out = savedPoints.map(p => `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.z !== null && p.z !== undefined ? Math.round(p.z) : '-'} ${p.color || '#ff3b30'}`).join('\n');
+    let out = savedPoints.map(p => {
+      let kanjiColor = getClosestKanjiColor(p.color);
+      return `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.z !== null && p.z !== undefined ? Math.round(p.z) : '-'} ${kanjiColor}`;
+    }).join('\n');
     document.getElementById('io_text').value = out;
   }
+  
   function deleteAllPoints() { if (savedPoints.length === 0) return; if (confirm("本当にすべて削除しますか？")) { savedPoints = []; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); drawMap(null, null, true); alert("削除しました。"); } }
 
   function savePointManual() {
@@ -562,7 +733,9 @@
 
   function editPoint(id) {
     let p = savedPoints.find(p => p.id === id); if (!p) return; editingId = id;
-    document.getElementById('edit_title').innerText = "座標を編集する"; document.getElementById('f6_name').value = p.name; document.getElementById('f6_x').value = pad5(p.e); document.getElementById('f6_y').value = pad5(p.n); document.getElementById('f6_z').value = p.z !== null && p.z !== undefined ? p.z : ""; document.getElementById('f6_color').value = p.color || lastColor;
+    document.getElementById('edit_title').innerText = "座標を編集する"; document.getElementById('f6_name').value = p.name; document.getElementById('f6_x').value = pad5(p.e); document.getElementById('f6_y').value = pad5(p.n); document.getElementById('f6_z').value = p.z !== null && p.z !== undefined ? p.z : ""; 
+    document.getElementById('f6_color').value = p.color || lastColor;
+    syncColorPickers(p.color || lastColor); 
     document.getElementById('btn_manual_save').innerText = "更新"; document.getElementById('btn_manual_cancel').classList.remove('hidden'); document.getElementById('edit_card').scrollIntoView({ behavior: 'smooth' });
   }
   function cancelEdit() {
@@ -589,7 +762,6 @@
     document.getElementById('savedList').innerHTML = html;
   }
 
-  // ドラッグ＆ドロップ
   const listContainer = document.getElementById('savedList'); let dragEl = null;
   listContainer.addEventListener('touchstart', function(e) { const handle = e.target.closest('.drag-handle'); if (!handle) return; e.preventDefault(); dragEl = handle.closest('.list-item'); dragEl.classList.add('dragging'); }, {passive: false});
   listContainer.addEventListener('touchmove', function(e) { if (!dragEl) return; e.preventDefault(); const touch = e.touches[0]; const target = document.elementFromPoint(touch.clientX, touch.clientY); if (!target) return; const targetItem = target.closest('.list-item'); if (targetItem && targetItem !== dragEl) { const rect = targetItem.getBoundingClientRect(); const isNext = (touch.clientY - rect.top) / (rect.bottom - rect.top) > 0.5; targetItem.parentNode.insertBefore(dragEl, isNext ? targetItem.nextSibling : targetItem); } }, {passive: false});
@@ -600,7 +772,6 @@
     savedPoints = newArray; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); document.getElementById('sort_select').value = 'manual'; updateMapDropdowns();
   });
 
-  // ========== ★カスタム地図設定ロジック ==========
   function saveMapOverlay() {
     let fileInput = document.getElementById('map_image_input');
     let tl_e = parseCoord(document.getElementById('map_tl_e').value); let tl_n = parseCoord(document.getElementById('map_tl_n').value);
@@ -650,7 +821,6 @@
     }
   }
 
-  // ========== マップ描画 ==========
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
 
@@ -676,7 +846,6 @@
     const style = getComputedStyle(document.body);
     const cBg = style.getPropertyValue('--map-bg').trim() || "#fff"; 
     
-    // ★ CSSから色を取得（新しく追加したHaloの色も）
     const cGrid1km = style.getPropertyValue('--map-grid-1km').trim() || "rgba(0,0,0,0.4)";
     const cGrid500m = style.getPropertyValue('--map-grid-500m').trim() || "rgba(0,0,0,0.25)";
     const cGrid100m = style.getPropertyValue('--map-grid-100m').trim() || "rgba(0,0,0,0.1)";
@@ -687,7 +856,6 @@
     
     ctx.fillStyle = cBg; ctx.fillRect(0, 0, w, h);
 
-    // 基準計算
     let pointsToBound = [...savedPoints];
     if (mapOverlay) {
       pointsToBound.push({e: mapOverlay.tl_e, n: mapOverlay.tl_n});
@@ -720,7 +888,6 @@
     let getX_real = (e_real) => { let dx = e_real - mapState.refE; return (mapState.padding + (dx - mapState.minDx) * mapState.baseScale) * mapState.scale + mapState.x; };
     let getY_real = (n_real) => { let dy = n_real - mapState.refN; return (h - mapState.padding - (dy - mapState.minDy) * mapState.baseScale) * mapState.scale + mapState.y; };
     
-    // 背景マップ描画
     if (mapOverlay && mapImageObj.complete && mapImageObj.src) {
        let img_x = getX_real(mapOverlay.tl_e); let img_y = getY_real(mapOverlay.tl_n);
        let img_w = getX_real(mapOverlay.br_e) - img_x; let img_h = getY_real(mapOverlay.br_n) - img_y; 
@@ -735,16 +902,13 @@
     let startE_real = Math.floor((mapState.refE + startDx) / 1000) * 1000; let endE_real = Math.ceil((mapState.refE + endDx) / 1000) * 1000;
     let startN_real = Math.floor((mapState.refN + startDy) / 1000) * 1000; let endN_real = Math.ceil((mapState.refN + endDy) / 1000) * 1000;
 
-    // ★ 描画設定（線をなめらかに繋ぐ）
     ctx.lineJoin = "round";
 
-    // 100m方眼の判定と描画
     let pixelPer100m = 100 * mapState.baseScale * mapState.scale;
     if (pixelPer100m > 12) { 
       let startE_100 = Math.floor((mapState.refE + startDx) / 100) * 100; let endE_100 = Math.ceil((mapState.refE + endDx) / 100) * 100;
       let startN_100 = Math.floor((mapState.refN + startDy) / 100) * 100; let endN_100 = Math.ceil((mapState.refN + endDy) / 100) * 100;
       
-      // 1. 標準の100m線
       ctx.beginPath();
       for(let e = startE_100; e <= endE_100; e += 100) {
         if(e % 500 === 0) continue; 
@@ -754,11 +918,9 @@
         if(n % 500 === 0) continue;
         let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
       }
-      // まずHaloを太く描いてから、上に本来の色を細く描く
       ctx.strokeStyle = cGridHalo; ctx.lineWidth = 2.5; ctx.stroke();
       ctx.strokeStyle = cGrid100m; ctx.lineWidth = 1; ctx.stroke();
 
-      // 2. 500m線
       ctx.beginPath();
       for(let e = startE_100; e <= endE_100; e += 100) {
         if(e % 500 === 0 && e % 1000 !== 0) {
@@ -773,7 +935,6 @@
       ctx.strokeStyle = cGridHalo; ctx.lineWidth = 3.2; ctx.stroke();
       ctx.strokeStyle = cGrid500m; ctx.lineWidth = 1.2; ctx.stroke();
 
-      // 3. 1〜9のナンバリング
       if (pixelPer100m > 20) {
         ctx.font = "9px sans-serif";
         ctx.textAlign = "left"; 
@@ -802,14 +963,12 @@
       }
     }
 
-    // ★ 1km方眼の描画
     ctx.beginPath();
     for(let e = startE_real; e <= endE_real; e += 1000) { let x = getX_real(e); if(x > -50 && x < w + 50) { ctx.moveTo(x, 0); ctx.lineTo(x, h); } }
     for(let n = startN_real; n <= endN_real; n += 1000) { let y = getY_real(n); if(y > -50 && y < h + 50) { ctx.moveTo(0, y); ctx.lineTo(w, y); } }
     ctx.strokeStyle = cGridHalo; ctx.lineWidth = 3.5; ctx.stroke();
     ctx.strokeStyle = cGrid1km; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // ★ 1km方眼のテキスト(数値) - 縁取りあり
     ctx.font = "bold 11px sans-serif";
     ctx.textAlign = "center"; 
     for(let e = startE_real; e <= endE_real; e += 1000) { 
@@ -828,21 +987,17 @@
       } 
     }
 
-    // 目標への照準ライン
     if (highlightP1 && highlightP2) { 
       ctx.strokeStyle = isNightMode ? '#ff3b30' : 'rgba(0, 122, 255, 0.7)'; 
       ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(getX(highlightP1.e), getY(highlightP1.n)); ctx.lineTo(getX(highlightP2.e), getY(highlightP2.n)); ctx.stroke(); 
     }
 
-    // 登録ピンの描画
     savedPoints.forEach(p => {
       let x = getX(p.e), y = getY(p.n); let pinColor = isNightMode ? '#ff3b30' : (p.color || '#ff3b30');
       if(x > -20 && x < w + 20 && y > -20 && y < h + 20) {
-        // ピンの円
         ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fillStyle = pinColor; ctx.fill();
         ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke(); 
         
-        // ピンのテキスト - 縁取りあり
         ctx.font = "bold 12px sans-serif"; 
         ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; ctx.strokeText(p.name, x + 10, y + 4);
         ctx.fillStyle = cMainText; ctx.fillText(p.name, x + 10, y + 4);
@@ -865,7 +1020,8 @@
   canvas.addEventListener('touchend', (e) => { e.preventDefault(); if (e.touches.length < 2) initialPinchDist = null; if (e.touches.length === 0) isDragging = false; });
 
   // 初期化
-  updateSavedList(); syncColorPickers();
+  renderColorPalette('f6_color_palette', 'f6_color');
+  updateSavedList();
 </script>
 </body>
 </html>
