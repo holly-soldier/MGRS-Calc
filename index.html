@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MGRS Calc</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#007aff">
@@ -47,7 +47,7 @@
     header { background-color: var(--header-bg); color: var(--header-text); padding: 15px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
     
     /* 下部ナビゲーションのスペースを確保 */
-    .container { padding: 15px; padding-bottom: 85px; } 
+    .container { padding: 15px; padding-bottom: calc(env(safe-area-inset-bottom) + 95px); } 
     
     input[type="text"], input[type="number"], input[type="file"], textarea, select { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
     select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
@@ -76,11 +76,20 @@
     .result { background: var(--result-bg); padding: 15px; border-radius: 8px; text-align: center; font-family: monospace; font-size: 18px; font-weight: bold; color: var(--result-text); line-height: 1.5; }
     .hidden { display: none !important; }
 
-    /* ★ カラーパレット */
-    .color-palette-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+    /* ★ カラーパレット (6色×2行のグリッドに変更) */
+    .color-palette-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
     .color-palette-container > span { font-size: 14px; font-weight: bold; color: var(--text-color); }
-    .color-palette { display: flex; flex-wrap: wrap; gap: 10px; }
-    .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); box-sizing: border-box; transition: 0.1s; }
+    .color-palette { 
+      display: grid; 
+      grid-template-columns: repeat(6, 1fr); 
+      gap: 12px 5px; 
+      justify-items: center; 
+      width: 100%;
+    }
+    .color-swatch { 
+      width: 36px; height: 36px; 
+      border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); box-sizing: border-box; transition: 0.1s; 
+    }
     .color-swatch.selected { border: 3px solid var(--text-color); transform: scale(1.15); box-shadow: 0 0 8px rgba(0,0,0,0.3); }
     
     .quick-save { display: flex; gap: 10px; align-items: center; justify-content: center; }
@@ -99,7 +108,7 @@
     .map-container { position: relative; width: 100%; overflow: hidden; }
     canvas { width: 100%; height: auto; aspect-ratio: 1; background-color: var(--map-bg); border: 1px solid var(--border-color); border-radius: 8px; touch-action: none; transition: background-color 0.3s; }
 
-    /* ========== ★ 下部タブナビゲーション ========== */
+    /* ========== ★ 下部タブナビゲーション (余白調整) ========== */
     .bottom-nav {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -107,13 +116,15 @@
       border-top: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-top: 8px;
+      /* iPhoneのホームバー(Safe Area)＋10pxの余白を設ける */
+      padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
       z-index: 1000;
     }
     .nav-item {
       flex: 1;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 10px 2px;
+      padding: 5px 2px;
       color: var(--text-color);
       opacity: 0.4;
       cursor: pointer;
@@ -128,11 +139,10 @@
       color: #ff3b30;
     }
     .nav-icon {
-      font-size: 20px;
+      font-size: 22px;
       margin-bottom: 4px;
       line-height: 1;
     }
-    /* 暗視モード時は絵文字も赤黒くする */
     .tactical-night .nav-icon {
       filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(400%) brightness(0.8);
     }
@@ -389,13 +399,14 @@
 
   if (isNightMode) document.body.classList.add('tactical-night');
 
+  // ★「桃（ピンク）」を桜色（#ff9eb5）に変更
   const COLOR_PALETTE = [
     { name: '赤', hex: '#ff3b30' }, { name: '青', hex: '#007aff' },
     { name: '緑', hex: '#34c759' }, { name: '黄', hex: '#ffcc00' },
     { name: '黒', hex: '#000000' }, { name: '白', hex: '#ffffff' },
     { name: '紫', hex: '#af52de' }, { name: '橙', hex: '#ff9500' },
     { name: '茶', hex: '#a2845e' }, { name: '灰', hex: '#8e8e93' },
-    { name: '水', hex: '#5ac8fa' }, { name: '桃', hex: '#ff2d55' }
+    { name: '水', hex: '#5ac8fa' }, { name: '桃', hex: '#ff9eb5' } 
   ];
 
   function hexToRgb(hex) {
@@ -462,6 +473,7 @@
     });
   }
 
+  // ★ parseColorStr内にも新しい桜色（#ff9eb5）を紐づけ
   function parseColorStr(c) {
     if (!c) return lastColor; let m = c.trim().toLowerCase();
     const cmap = { 
@@ -470,7 +482,7 @@
       '黒':'#000000', 'black':'#000000', '白':'#ffffff', 'white':'#ffffff', 
       '紫':'#af52de', 'purple':'#af52de', '橙':'#ff9500', 'orange':'#ff9500',
       '茶':'#a2845e', 'brown':'#a2845e', '灰':'#8e8e93', 'gray':'#8e8e93',
-      '水':'#5ac8fa', 'cyan':'#5ac8fa', '桃':'#ff2d55', 'pink':'#ff2d55'
+      '水':'#5ac8fa', 'cyan':'#5ac8fa', '桃':'#ff9eb5', 'pink':'#ff9eb5'
     };
     if (cmap[m]) return cmap[m];
     if (m.startsWith('#') && (m.length === 4 || m.length === 7)) return m; return lastColor;
@@ -541,14 +553,10 @@
     }, err => { alert("GPS取得失敗: " + err.message); document.getElementById(eId).value = ""; document.getElementById(nId).value = ""; }, { enableHighAccuracy: true });
   }
 
-  // ★ 画面切り替えのロジック（タブ対応版）
   function switchView(selectedId) {
-    // すべてのビューを隠す
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-    // 選択されたビューを表示
     document.getElementById(selectedId).classList.remove('hidden');
 
-    // 下部タブのハイライトを更新
     document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
     let activeNav = document.getElementById('nav_' + selectedId);
     if(activeNav) activeNav.classList.add('active');
@@ -563,7 +571,6 @@
       }
       drawMap(null, null, true); 
     }
-    // 画面の一番上にスクロール
     window.scrollTo(0, 0);
   }
 
@@ -1022,6 +1029,18 @@
   // 初期化
   renderColorPalette('f6_color_palette', 'f6_color');
   updateSavedList();
+
+  // ★ ページロード時に現在選択されているタブ（メニューの初期値）に合わせて表示を切り替える
+  document.addEventListener('DOMContentLoaded', () => {
+    let currentSelect = document.getElementById('menu');
+    if(currentSelect && currentSelect.value) {
+      switchView(currentSelect.value);
+    } else {
+      switchView('func1'); // デフォルト
+    }
+    // 古いセレクトボックスメニューは非表示にする
+    if(currentSelect) currentSelect.style.display = 'none';
+  });
 </script>
 </body>
 </html>
