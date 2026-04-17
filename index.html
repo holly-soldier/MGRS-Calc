@@ -122,16 +122,16 @@
         <button class="btn-gps" onclick="getGPS('f1_sx', 'f1_sy', 'f1_sz')">📍GPS取得</button>
       </div>
       <div class="input-group">
-        <input type="text" inputmode="numeric" id="f1_sx" placeholder="E座標 (必須)">
-        <input type="text" inputmode="numeric" id="f1_sy" placeholder="N座標 (必須)">
-        <input type="number" id="f1_sz" placeholder="標高(m) ※任意">
+        <input type="text" inputmode="decimal" id="f1_sx" placeholder="E座標 (必須)">
+        <input type="text" inputmode="decimal" id="f1_sy" placeholder="N座標 (必須)">
+        <input type="number" step="any" id="f1_sz" placeholder="標高(m) ※任意">
       </div>
       <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
       <h3>目標地</h3>
       <div class="input-group">
-        <input type="text" inputmode="numeric" id="f1_ex" placeholder="E座標 (必須)">
-        <input type="text" inputmode="numeric" id="f1_ey" placeholder="N座標 (必須)">
-        <input type="number" id="f1_ez" placeholder="標高(m) ※任意">
+        <input type="text" inputmode="decimal" id="f1_ex" placeholder="E座標 (必須)">
+        <input type="text" inputmode="decimal" id="f1_ey" placeholder="N座標 (必須)">
+        <input type="number" step="any" id="f1_ez" placeholder="標高(m) ※任意">
       </div>
     </div>
     <button onclick="calcF1()">計算実行</button>
@@ -145,16 +145,16 @@
         <button class="btn-gps" onclick="getGPS('f2_x', 'f2_y', 'f2_z')">📍GPS取得</button>
       </div>
       <div class="input-group">
-        <input type="text" inputmode="numeric" id="f2_x" placeholder="E座標 (必須)">
-        <input type="text" inputmode="numeric" id="f2_y" placeholder="N座標 (必須)">
-        <input type="number" id="f2_z" placeholder="標高(m) ※任意">
+        <input type="text" inputmode="decimal" id="f2_x" placeholder="E座標 (必須)">
+        <input type="text" inputmode="decimal" id="f2_y" placeholder="N座標 (必須)">
+        <input type="number" step="any" id="f2_z" placeholder="標高(m) ※任意">
       </div>
       <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
       <h3>目標への諸元</h3>
       <div class="input-group">
-        <input type="number" id="f2_az" placeholder="方位角(mil) (必須)">
-        <input type="number" id="f2_dist" placeholder="距離(m) (必須)">
-        <input type="number" id="f2_elv" placeholder="高低角(mil) ※任意">
+        <input type="number" step="any" id="f2_az" placeholder="方位角(mil) (必須)">
+        <input type="number" step="any" id="f2_dist" placeholder="距離(m) (必須)">
+        <input type="number" step="any" id="f2_elv" placeholder="高低角(mil) ※任意">
       </div>
     </div>
     <button onclick="calcF2()">計算実行</button>
@@ -168,9 +168,9 @@
         <button class="btn-gps" onclick="getGPS('f3_p1x', 'f3_p1y')">📍GPS取得</button>
       </div>
       <div class="input-group">
-        <input type="text" inputmode="numeric" id="f3_p1x" placeholder="E座標">
-        <input type="text" inputmode="numeric" id="f3_p1y" placeholder="N座標">
-        <input type="number" id="f3_az1" placeholder="目標への方位角 (mil)">
+        <input type="text" inputmode="decimal" id="f3_p1x" placeholder="E座標">
+        <input type="text" inputmode="decimal" id="f3_p1y" placeholder="N座標">
+        <input type="number" step="any" id="f3_az1" placeholder="目標への方位角 (mil)">
       </div>
     </div>
     <div class="card">
@@ -179,9 +179,9 @@
         <button class="btn-gps" onclick="getGPS('f3_p2x', 'f3_p2y')">📍GPS取得</button>
       </div>
       <div class="input-group">
-        <input type="text" inputmode="numeric" id="f3_p2x" placeholder="E座標">
-        <input type="text" inputmode="numeric" id="f3_p2y" placeholder="N座標">
-        <input type="number" id="f3_az2" placeholder="目標への方位角 (mil)">
+        <input type="text" inputmode="decimal" id="f3_p2x" placeholder="E座標">
+        <input type="text" inputmode="decimal" id="f3_p2y" placeholder="N座標">
+        <input type="number" step="any" id="f3_az2" placeholder="目標への方位角 (mil)">
       </div>
     </div>
     <button onclick="calcF3()">計算実行</button>
@@ -196,9 +196,9 @@
       </div>
       <div class="input-group">
         <select id="f4_sel1" onchange="loadPointToInputs('f4_sel1', 'f4_p1x', 'f4_p1y')"></select>
-        <input type="text" inputmode="numeric" id="f4_p1x" placeholder="E座標">
-        <input type="text" inputmode="numeric" id="f4_p1y" placeholder="N座標">
-        <input type="number" id="f4_az1" placeholder="Aへの測定方位角 (mil)">
+        <input type="text" inputmode="decimal" id="f4_p1x" placeholder="E座標">
+        <input type="text" inputmode="decimal" id="f4_p1y" placeholder="N座標">
+        <input type="number" step="any" id="f4_az1" placeholder="Aへの測定方位角 (mil)">
       </div>
     </div>
     <div class="card">
@@ -207,9 +207,9 @@
       </div>
       <div class="input-group">
         <select id="f4_sel2" onchange="loadPointToInputs('f4_sel2', 'f4_p2x', 'f4_p2y')"></select>
-        <input type="text" inputmode="numeric" id="f4_p2x" placeholder="E座標">
-        <input type="text" inputmode="numeric" id="f4_p2y" placeholder="N座標">
-        <input type="number" id="f4_az2" placeholder="Bへの測定方位角 (mil)">
+        <input type="text" inputmode="decimal" id="f4_p2x" placeholder="E座標">
+        <input type="text" inputmode="decimal" id="f4_p2y" placeholder="N座標">
+        <input type="number" step="any" id="f4_az2" placeholder="Bへの測定方位角 (mil)">
       </div>
     </div>
     <button onclick="calcF4()">計算実行</button>
@@ -222,10 +222,10 @@
         <h3 style="margin:0;">開始点</h3>
         <button class="btn-gps" onclick="getGPS('f5_x', 'f5_y', null)">📍GPS取得</button>
       </div>
-      <div class="input-group"><input type="text" inputmode="numeric" id="f5_x" placeholder="E座標"><input type="text" inputmode="numeric" id="f5_y" placeholder="N座標"></div>
+      <div class="input-group"><input type="text" inputmode="decimal" id="f5_x" placeholder="E座標"><input type="text" inputmode="decimal" id="f5_y" placeholder="N座標"></div>
       <h3>移動リスト</h3>
       <div id="routeList">
-        <div class="route-row"><input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"></div>
+        <div class="route-row"><input type="number" step="any" class="r_az" placeholder="方位"><input type="number" step="any" class="r_dist" placeholder="距離"></div>
       </div>
       <button class="btn-green" onclick="addRouteRow()" style="margin-top:10px;">＋ 移動を追加</button>
     </div>
@@ -240,7 +240,7 @@
         <button class="btn-gray btn-small" onclick="toggleBatchIO()" style="margin:0; width:auto; padding:6px 10px;">📁 データ共有</button>
       </div>
       <div id="batch_io_area" class="hidden" style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border-color);">
-        <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 標高(任意) 色<br>例: T1 00700 04245 150 赤</p>
+        <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 標高(任意) 色<br>例: T1 00700.5 04245.2 150 赤</p>
         <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
         <div style="display:flex; gap:10px;">
           <button class="btn-green btn-small" onclick="importPoints()" style="margin:0; flex:1;">↓ 読込</button>
@@ -263,9 +263,9 @@
 
       <div class="input-group">
         <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
-        <input type="text" inputmode="numeric" id="f6_x" placeholder="E座標 (必須)">
-        <input type="text" inputmode="numeric" id="f6_y" placeholder="N座標 (必須)">
-        <input type="number" id="f6_z" placeholder="標高(m) ※任意">
+        <input type="text" inputmode="decimal" id="f6_x" placeholder="E座標 (必須)">
+        <input type="text" inputmode="decimal" id="f6_y" placeholder="N座標 (必須)">
+        <input type="number" step="any" id="f6_z" placeholder="標高(m) ※任意">
       </div>
       <div style="display:flex; gap:10px;">
         <button id="btn_manual_save" class="btn-green" onclick="savePointManual()" style="margin-bottom:0;">登録</button>
@@ -303,12 +303,12 @@
         <p style="font-size:12px; margin-top:0; opacity:0.7;">スマホ内の地図画像を読み込み、左上と右下の座標を入力することで背景に配置します。</p>
         <input type="file" id="map_image_input" accept="image/*" style="width:100%; margin-bottom: 10px; font-size:14px;">
         <div style="display:flex; gap:10px; margin-bottom:5px;">
-          <input type="text" id="map_tl_e" placeholder="左上 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
-          <input type="text" id="map_tl_n" placeholder="左上 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+          <input type="text" id="map_tl_e" placeholder="左上 E座標" inputmode="decimal" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+          <input type="text" id="map_tl_n" placeholder="左上 N座標" inputmode="decimal" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
         </div>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <input type="text" id="map_br_e" placeholder="右下 E座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
-          <input type="text" id="map_br_n" placeholder="右下 N座標" inputmode="numeric" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+          <input type="text" id="map_br_e" placeholder="右下 E座標" inputmode="decimal" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
+          <input type="text" id="map_br_n" placeholder="右下 N座標" inputmode="decimal" style="flex:1; padding:8px; border-radius:5px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--input-text);">
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn-green btn-small" onclick="saveMapOverlay()" style="margin:0; flex:1;">設定・保存</button>
@@ -487,19 +487,34 @@
     else { el.classList.add('hidden'); }
   }
 
+  // ★ 小数点に対応した parseCoord
   const parseCoord = (val) => {
     if (val === "" || val === null || val === undefined) return null;
-    let s = String(val).trim().substring(0, 5).padEnd(5, '0');
-    return Number(s);
+    let str = String(val).trim();
+    // 小数点が含まれていない場合のみ、従来通り5桁に自動パディング
+    if (!str.includes('.')) {
+      str = str.substring(0, 5).padEnd(5, '0');
+    }
+    return parseFloat(str);
   };
+
   const parseZ = (val) => {
     if (val === "" || val === null || val === undefined || val === "-") return null;
     return Number(val);
   };
+
+  // ★ 小数点に対応した pad5
   const pad5 = (num) => {
-    let n = Math.round(num); n = ((n % 100000) + 100000) % 100000;
-    return String(n).padStart(5, '0');
+    if (num === null || num === undefined || isNaN(num)) return "";
+    let n = ((num % 100000) + 100000) % 100000;
+    // 浮動小数点誤差を丸める（小数点以下3桁程度までを許容）
+    n = Math.round(n * 1000) / 1000;
+    let parts = String(n).split('.');
+    // 整数部分を5桁ゼロ埋め
+    parts[0] = parts[0].padStart(5, '0');
+    return parts.join('.');
   };
+
   const pad4 = (num) => String(Math.round(num)).padStart(4, '0');
 
   function latLonToUTM(lat, lon) {
@@ -519,20 +534,25 @@
     if (lat < 0) utmN += 10000000.0;
     return { e: utmE, n: utmN };
   }
+
+  // ★ GPSからのMGRS変換（小数点を保持するよう改修）
   function getMGRSfromLatLon(lat, lon) {
-    let utm = latLonToUTM(lat, lon); return { e: Math.floor(utm.e % 100000), n: Math.floor(utm.n % 100000) };
+    let utm = latLonToUTM(lat, lon); 
+    return { e: (utm.e % 100000), n: (utm.n % 100000) };
   }
+
   function getGPS(eId, nId, zId) {
     if (!navigator.geolocation) { alert("この端末ではGPSがサポートされていません"); return; }
     document.getElementById(eId).value = "取得中..."; document.getElementById(nId).value = "取得中...";
     navigator.geolocation.getCurrentPosition(pos => {
       let mgrs = getMGRSfromLatLon(pos.coords.latitude, pos.coords.longitude);
-      document.getElementById(eId).value = pad5(mgrs.e); document.getElementById(nId).value = pad5(mgrs.n);
+      // GPS精度を加味し、小数点第1位まで出力
+      document.getElementById(eId).value = pad5(Math.round(mgrs.e * 10) / 10);
+      document.getElementById(nId).value = pad5(Math.round(mgrs.n * 10) / 10);
       if (zId && pos.coords.altitude !== null) { document.getElementById(zId).value = Math.round(pos.coords.altitude); }
     }, err => { alert("GPS取得失敗: " + err.message); document.getElementById(eId).value = ""; document.getElementById(nId).value = ""; }, { enableHighAccuracy: true });
   }
 
-  // ★ 登録座標呼び出し機能
   function loadPointToInputs(selId, eId, nId) {
     let id = document.getElementById(selId).value;
     if(!id) return;
@@ -543,7 +563,6 @@
     }
   }
 
-  // ★ すべてのセレクトボックスを更新
   function updateAllDropdowns() {
     let html = '<option value="">--- 登録座標から選択 ---</option>'; 
     savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
@@ -661,7 +680,7 @@
     renderColorPalette('qname_f4_color_palette', 'qname_f4_color'); syncColorPickers();
   }
 
-  function addRouteRow() { let row = document.createElement('div'); row.className = 'route-row'; row.innerHTML = `<input type="number" class="r_az" placeholder="方位"><input type="number" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`; document.getElementById('routeList').appendChild(row); }
+  function addRouteRow() { let row = document.createElement('div'); row.className = 'route-row'; row.innerHTML = `<input type="number" step="any" class="r_az" placeholder="方位"><input type="number" step="any" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`; document.getElementById('routeList').appendChild(row); }
   const getCompactSaveUI = (id, label, x, y, z = null) => { 
     let zArg = z !== null ? z : 'null'; let zDisp = z !== null ? ` H:${Math.round(z)}` : "";
     return `<div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px dashed var(--border-color); text-align:left;"><div style="font-family:monospace; font-size:16px; margin-bottom:8px;">${label}: E:${pad5(x)} N:${pad5(y)}${zDisp}</div><div class="quick-save" style="margin-top:5px;"><input type="text" id="${id}" placeholder="${label}名称"><button onclick="quickSaveTraverse('${id}', ${x}, ${y}, ${zArg})">登録</button></div></div>`; 
