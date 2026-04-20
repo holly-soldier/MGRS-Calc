@@ -49,7 +49,7 @@
     .container { padding: 15px; padding-bottom: calc(env(safe-area-inset-bottom) + 95px); } 
     
     input[type="text"], input[type="number"], input[type="file"], textarea, select { background-color: var(--input-bg); color: var(--input-text); border: 1px solid var(--border-color); font-family: sans-serif; transition: background-color 0.3s; }
-    select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 20px; border-radius: 8px; box-sizing: border-box; }
+    select { width: 100%; padding: 10px; font-size: 16px; margin-bottom: 10px; border-radius: 8px; box-sizing: border-box; }
     textarea { width: 100%; box-sizing: border-box; padding: 12px; font-size: 14px; border-radius: 5px; resize: vertical; min-height: 120px; margin-bottom: 10px; font-family: monospace; border:1px solid var(--border-color); }
     input[type="file"] { padding: 8px; border-radius: 5px; box-sizing: border-box; }
     
@@ -60,9 +60,9 @@
     .input-group input, .input-group select { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; border-radius: 5px; }
     .input-group select { margin-bottom: 0; }
     
-    .route-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-    .route-row input { flex: 1; min-width: 0; padding: 12px; font-size: 16px; border-radius: 5px; box-sizing: border-box; }
-    .route-row button { width: auto; padding: 12px 15px; background-color: #ff3b30; margin-bottom: 0; border-radius: 5px; }
+    .route-row { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; }
+    .route-row input { flex: 1; min-width: 0; padding: 10px; font-size: 15px; border-radius: 5px; box-sizing: border-box; }
+    .route-row button { width: auto; padding: 10px 12px; background-color: #ff3b30; margin-bottom: 0; border-radius: 5px; }
     
     button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-sizing: border-box; transition: 0.2s; }
     button:active { opacity: 0.7; }
@@ -122,6 +122,7 @@
         <button class="btn-gps" onclick="getGPS('f1_sx', 'f1_sy', 'f1_sz')">📍GPS取得</button>
       </div>
       <div class="input-group">
+        <select id="f1_sel_s" onchange="loadPointToInputs('f1_sel_s', 'f1_sx', 'f1_sy', 'f1_sz')"></select>
         <input type="text" inputmode="decimal" id="f1_sx" placeholder="E座標 (必須)">
         <input type="text" inputmode="decimal" id="f1_sy" placeholder="N座標 (必須)">
         <input type="number" step="any" id="f1_sz" placeholder="標高(m) ※任意">
@@ -129,6 +130,7 @@
       <hr style="border:0; border-top:1px dashed var(--border-color); margin:15px 0;">
       <h3>目標地</h3>
       <div class="input-group">
+        <select id="f1_sel_e" onchange="loadPointToInputs('f1_sel_e', 'f1_ex', 'f1_ey', 'f1_ez')"></select>
         <input type="text" inputmode="decimal" id="f1_ex" placeholder="E座標 (必須)">
         <input type="text" inputmode="decimal" id="f1_ey" placeholder="N座標 (必須)">
         <input type="number" step="any" id="f1_ez" placeholder="標高(m) ※任意">
@@ -145,6 +147,7 @@
         <button class="btn-gps" onclick="getGPS('f2_x', 'f2_y', 'f2_z')">📍GPS取得</button>
       </div>
       <div class="input-group">
+        <select id="f2_sel" onchange="loadPointToInputs('f2_sel', 'f2_x', 'f2_y', 'f2_z')"></select>
         <input type="text" inputmode="decimal" id="f2_x" placeholder="E座標 (必須)">
         <input type="text" inputmode="decimal" id="f2_y" placeholder="N座標 (必須)">
         <input type="number" step="any" id="f2_z" placeholder="標高(m) ※任意">
@@ -154,7 +157,7 @@
       <div class="input-group">
         <input type="number" step="any" id="f2_az" placeholder="方位角(mil) (必須)">
         <input type="number" step="any" id="f2_dist" placeholder="距離(m) (必須)">
-        <input type="number" step="any" id="f2_elv" placeholder="高低角(mil) ※任意">
+        <input type="number" step="any" id="f2_elv" placeholder="垂直角(mil) ※任意">
       </div>
     </div>
     <button onclick="calcF2()">計算実行</button>
@@ -168,6 +171,7 @@
         <button class="btn-gps" onclick="getGPS('f3_p1x', 'f3_p1y')">📍GPS取得</button>
       </div>
       <div class="input-group">
+        <select id="f3_sel1" onchange="loadPointToInputs('f3_sel1', 'f3_p1x', 'f3_p1y')"></select>
         <input type="text" inputmode="decimal" id="f3_p1x" placeholder="E座標">
         <input type="text" inputmode="decimal" id="f3_p1y" placeholder="N座標">
         <input type="number" step="any" id="f3_az1" placeholder="目標への方位角 (mil)">
@@ -179,6 +183,7 @@
         <button class="btn-gps" onclick="getGPS('f3_p2x', 'f3_p2y')">📍GPS取得</button>
       </div>
       <div class="input-group">
+        <select id="f3_sel2" onchange="loadPointToInputs('f3_sel2', 'f3_p2x', 'f3_p2y')"></select>
         <input type="text" inputmode="decimal" id="f3_p2x" placeholder="E座標">
         <input type="text" inputmode="decimal" id="f3_p2y" placeholder="N座標">
         <input type="number" step="any" id="f3_az2" placeholder="目標への方位角 (mil)">
@@ -218,16 +223,47 @@
 
   <div id="func5" class="view hidden">
     <div class="card">
+      <p style="font-size:14px; color:var(--text-color); margin-top:0; opacity: 0.8; margin-bottom:15px;">出発点(器械点)と後視点(基準)から、連続して右回り夾角と距離を観測します。</p>
+      
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
-        <h3 style="margin:0;">開始点</h3>
-        <button class="btn-gps" onclick="getGPS('f5_x', 'f5_y', null)">📍GPS取得</button>
+        <h3 style="margin:0; color:#007aff;">出発点 A (器械点1)</h3>
+        <button class="btn-gps" onclick="getGPS('f5_ax', 'f5_ay', 'f5_az')">📍GPS取得</button>
       </div>
-      <div class="input-group"><input type="text" inputmode="decimal" id="f5_x" placeholder="E座標"><input type="text" inputmode="decimal" id="f5_y" placeholder="N座標"></div>
-      <h3>移動リスト</h3>
+      <div class="input-group">
+        <select id="f5_sel_a" onchange="loadPointToInputs('f5_sel_a', 'f5_ax', 'f5_ay', 'f5_az'); calcTraverseBaseAz();"></select>
+        <input type="text" inputmode="decimal" id="f5_ax" placeholder="E座標 (必須)" onchange="calcTraverseBaseAz()">
+        <input type="text" inputmode="decimal" id="f5_ay" placeholder="N座標 (必須)" onchange="calcTraverseBaseAz()">
+        <input type="number" step="any" id="f5_az" placeholder="標高(m) ※任意">
+      </div>
+
+      <h3 style="margin-top:20px; color:#ff9500;">後視点 B (方向基準)</h3>
+      <p style="font-size:12px; margin-top:0; opacity: 0.8;">B点の座標を入れるか、A→Bの方位角を直接入力してください。</p>
+      <div class="input-group">
+        <select id="f5_sel_b" onchange="loadPointToInputs('f5_sel_b', 'f5_bx', 'f5_by'); calcTraverseBaseAz();"></select>
+        <div style="display:flex; gap:10px;">
+          <input type="text" inputmode="decimal" id="f5_bx" placeholder="B点 E座標" onchange="calcTraverseBaseAz()">
+          <input type="text" inputmode="decimal" id="f5_by" placeholder="B点 N座標" onchange="calcTraverseBaseAz()">
+        </div>
+        <input type="number" step="any" id="f5_base_az" placeholder="A→B 基準方位角 (mil) (必須)" style="font-weight:bold; background-color:var(--result-bg); color:var(--result-text); border:1px solid #007aff;">
+      </div>
+
+      <h3 style="margin-top:20px;">観測リスト (右回り)</h3>
+      <p style="font-size:12px; margin-top:0; opacity: 0.8; line-height:1.4;">
+        ※1回目はBを「0」としてCを観測。<br>
+        ※2回目はAを「0(後視)」としてDを観測。<br>
+        以降、直前の点を後視点として右回りで入力。
+      </p>
+      
       <div id="routeList">
-        <div class="route-row"><input type="number" step="any" class="r_az" placeholder="方位"><input type="number" step="any" class="r_dist" placeholder="距離"></div>
+        <div class="route-row">
+          <span style="font-size:15px; font-weight:bold; width:20px; text-align:center;">C</span>
+          <input type="number" step="any" class="r_ang" placeholder="角度mil">
+          <input type="number" step="any" class="r_dist" placeholder="距離m">
+          <input type="number" step="any" class="r_elv" placeholder="垂直角mil">
+          <button onclick="this.parentElement.remove(); updateTraverseLabels();" style="padding:10px 12px;">×</button>
+        </div>
       </div>
-      <button class="btn-green" onclick="addRouteRow()" style="margin-top:10px;">＋ 移動を追加</button>
+      <button class="btn-green" onclick="addTraverseRow()" style="margin-top:10px;">＋ 次の観測を追加</button>
     </div>
     <button onclick="calcF5()">計算実行</button>
     <div id="res5" class="result hidden"></div>
@@ -398,13 +434,10 @@
     if(!hexStr) return '赤';
     let directMatch = COLOR_PALETTE.find(c => c.hex.toLowerCase() === hexStr.toLowerCase());
     if(directMatch) return directMatch.name;
-
     let targetRgb = hexToRgb(hexStr);
     if(!targetRgb) return '赤'; 
-    
     let closest = COLOR_PALETTE[0];
     let minDistance = Infinity;
-    
     for(let color of COLOR_PALETTE) {
       let rgb = hexToRgb(color.hex);
       if(!rgb) continue;
@@ -487,14 +520,10 @@
     else { el.classList.add('hidden'); }
   }
 
-  // ★ 小数点に対応した parseCoord
   const parseCoord = (val) => {
     if (val === "" || val === null || val === undefined) return null;
     let str = String(val).trim();
-    // 小数点が含まれていない場合のみ、従来通り5桁に自動パディング
-    if (!str.includes('.')) {
-      str = str.substring(0, 5).padEnd(5, '0');
-    }
+    if (!str.includes('.')) { str = str.substring(0, 5).padEnd(5, '0'); }
     return parseFloat(str);
   };
 
@@ -503,14 +532,11 @@
     return Number(val);
   };
 
-  // ★ 小数点に対応した pad5
   const pad5 = (num) => {
     if (num === null || num === undefined || isNaN(num)) return "";
     let n = ((num % 100000) + 100000) % 100000;
-    // 浮動小数点誤差を丸める（小数点以下3桁程度までを許容）
     n = Math.round(n * 1000) / 1000;
     let parts = String(n).split('.');
-    // 整数部分を5桁ゼロ埋め
     parts[0] = parts[0].padStart(5, '0');
     return parts.join('.');
   };
@@ -535,7 +561,6 @@
     return { e: utmE, n: utmN };
   }
 
-  // ★ GPSからのMGRS変換（小数点を保持するよう改修）
   function getMGRSfromLatLon(lat, lon) {
     let utm = latLonToUTM(lat, lon); 
     return { e: (utm.e % 100000), n: (utm.n % 100000) };
@@ -546,20 +571,24 @@
     document.getElementById(eId).value = "取得中..."; document.getElementById(nId).value = "取得中...";
     navigator.geolocation.getCurrentPosition(pos => {
       let mgrs = getMGRSfromLatLon(pos.coords.latitude, pos.coords.longitude);
-      // GPS精度を加味し、小数点第1位まで出力
       document.getElementById(eId).value = pad5(Math.round(mgrs.e * 10) / 10);
       document.getElementById(nId).value = pad5(Math.round(mgrs.n * 10) / 10);
       if (zId && pos.coords.altitude !== null) { document.getElementById(zId).value = Math.round(pos.coords.altitude); }
     }, err => { alert("GPS取得失敗: " + err.message); document.getElementById(eId).value = ""; document.getElementById(nId).value = ""; }, { enableHighAccuracy: true });
   }
 
-  function loadPointToInputs(selId, eId, nId) {
+  function loadPointToInputs(selId, eId, nId, zId) {
     let id = document.getElementById(selId).value;
     if(!id) return;
     let p = savedPoints.find(pt => pt.id == parseInt(id));
     if(p) {
       document.getElementById(eId).value = pad5(p.e);
       document.getElementById(nId).value = pad5(p.n);
+      if(zId && p.z !== null && p.z !== undefined) {
+        document.getElementById(zId).value = p.z;
+      } else if (zId) {
+        document.getElementById(zId).value = "";
+      }
     }
   }
 
@@ -567,7 +596,7 @@
     let html = '<option value="">--- 登録座標から選択 ---</option>'; 
     savedPoints.forEach(p => { html += `<option value="${p.id}">${p.name}</option>`; });
     
-    let ids = ['map_start', 'map_end', 'f4_sel1', 'f4_sel2'];
+    let ids = ['map_start', 'map_end', 'f4_sel1', 'f4_sel2', 'f1_sel_s', 'f1_sel_e', 'f2_sel', 'f3_sel1', 'f3_sel2', 'f5_sel_a', 'f5_sel_b'];
     ids.forEach(id => {
       let el = document.getElementById(id);
       if(el) {
@@ -588,13 +617,15 @@
 
     syncColorPickers();
     if (selectedId === 'func6') updateSavedList();
-    if (selectedId === 'func4' || selectedId === 'func7') { 
-      updateAllDropdowns(); 
-      if (selectedId === 'func7' && mapOverlay) {
+    
+    updateAllDropdowns(); 
+    
+    if (selectedId === 'func7') { 
+      if (mapOverlay) {
          document.getElementById('map_tl_e').value = pad5(mapOverlay.tl_e); document.getElementById('map_tl_n').value = pad5(mapOverlay.tl_n);
          document.getElementById('map_br_e').value = pad5(mapOverlay.br_e); document.getElementById('map_br_n').value = pad5(mapOverlay.br_n);
       }
-      if (selectedId === 'func7') drawMap(null, null, true); 
+      drawMap(null, null, true); 
     }
     window.scrollTo(0, 0);
   }
@@ -638,8 +669,8 @@
     let ex = parseCoord(document.getElementById('f1_ex').value); let ey = parseCoord(document.getElementById('f1_ey').value); let ez = parseZ(document.getElementById('f1_ez').value);
     if(sx===null || sy===null || ex===null || ey===null) return;
     let r = calcData(sx, sy, sz, ex, ey, ez);
-    let elvText = r.elvMil !== null ? `<br>高低差: ${r.dz > 0 ? '+' : ''}${Math.round(r.dz)} m<br>高低角: ${r.elvMil > 0 ? '+' : ''}${Math.round(r.elvMil)} mil` : "";
-    document.getElementById('res1').innerHTML = `方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m${elvText}`;
+    let elvText = r.elvMil !== null ? `<br>高低差: ${r.dz > 0 ? '+' : ''}${Math.round(r.dz * 10)/10} m<br>垂直角: ${r.elvMil > 0 ? '+' : ''}${Math.round(r.elvMil)} mil` : "";
+    document.getElementById('res1').innerHTML = `方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist * 10)/10} m${elvText}`;
     document.getElementById('res1').classList.remove('hidden');
   }
 
@@ -650,7 +681,7 @@
     let az = Number(azStr); let dist = Number(distStr);
     let targetX = x + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); let targetY = y + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
     let targetZ = null; let zStrInfo = "";
-    if (z !== null && elv !== null) { let dz = dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE)); targetZ = z + dz; zStrInfo = `  H: ${Math.round(targetZ)}`; }
+    if (z !== null && elv !== null) { let dz = dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE)); targetZ = z + dz; zStrInfo = `  H: ${Math.round(targetZ * 10)/10}`; }
     let res = document.getElementById('res2'); res.innerHTML = `目標座標<br>E: ${pad5(targetX)}  N: ${pad5(targetY)}${zStrInfo}` + getSaveUI('qname_f2', targetX, targetY, targetZ); 
     res.classList.remove('hidden'); 
     renderColorPalette('qname_f2_color_palette', 'qname_f2_color'); syncColorPickers();
@@ -680,9 +711,39 @@
     renderColorPalette('qname_f4_color_palette', 'qname_f4_color'); syncColorPickers();
   }
 
-  function addRouteRow() { let row = document.createElement('div'); row.className = 'route-row'; row.innerHTML = `<input type="number" step="any" class="r_az" placeholder="方位"><input type="number" step="any" class="r_dist" placeholder="距離"><button onclick="this.parentElement.remove()">×</button>`; document.getElementById('routeList').appendChild(row); }
+  function calcTraverseBaseAz() {
+    let ax = parseCoord(document.getElementById('f5_ax').value);
+    let ay = parseCoord(document.getElementById('f5_ay').value);
+    let bx = parseCoord(document.getElementById('f5_bx').value);
+    let by = parseCoord(document.getElementById('f5_by').value);
+    if (ax !== null && ay !== null && bx !== null && by !== null) {
+      let r = calcData(ax, ay, null, bx, by, null);
+      document.getElementById('f5_base_az').value = Math.round(r.mil * 10) / 10;
+    }
+  }
+
+  function addTraverseRow() { 
+    let list = document.getElementById('routeList');
+    let row = document.createElement('div'); 
+    row.className = 'route-row'; 
+    row.innerHTML = `<span style="font-size:15px; font-weight:bold; width:20px; text-align:center;"></span>
+                     <input type="number" step="any" class="r_ang" placeholder="角度mil">
+                     <input type="number" step="any" class="r_dist" placeholder="距離m">
+                     <input type="number" step="any" class="r_elv" placeholder="垂直角mil">
+                     <button onclick="this.parentElement.remove(); updateTraverseLabels();" style="padding:10px 12px;">×</button>`; 
+    list.appendChild(row); 
+    updateTraverseLabels();
+  }
+  
+  function updateTraverseLabels() {
+    let rows = document.getElementById('routeList').querySelectorAll('.route-row');
+    rows.forEach((row, i) => {
+        row.querySelector('span').innerText = String.fromCharCode(67 + i); 
+    });
+  }
+
   const getCompactSaveUI = (id, label, x, y, z = null) => { 
-    let zArg = z !== null ? z : 'null'; let zDisp = z !== null ? ` H:${Math.round(z)}` : "";
+    let zArg = z !== null ? z : 'null'; let zDisp = z !== null ? ` H:${Math.round(z * 10)/10}` : "";
     return `<div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px dashed var(--border-color); text-align:left;"><div style="font-family:monospace; font-size:16px; margin-bottom:8px;">${label}: E:${pad5(x)} N:${pad5(y)}${zDisp}</div><div class="quick-save" style="margin-top:5px;"><input type="text" id="${id}" placeholder="${label}名称"><button onclick="quickSaveTraverse('${id}', ${x}, ${y}, ${zArg})">登録</button></div></div>`; 
   };
 
@@ -696,16 +757,55 @@
   }
 
   function calcF5() {
-    let cx = parseCoord(document.getElementById('f5_x').value); let cy = parseCoord(document.getElementById('f5_y').value); if(cx===null || cy===null) return;
-    let azInputs = document.querySelectorAll('.r_az'); let distInputs = document.querySelectorAll('.r_dist');
-    let html = `<div class="color-palette-container"><span>一括マップ表示色</span><div class="color-palette" id="f5_color_palette"></div><input type="hidden" id="f5_color" value="${lastColor}"></div>`;
-    html += getCompactSaveUI('qname_f5_0', '始点', cx, cy);
-    for (let i = 0; i < azInputs.length; i++) {
-      let az = Number(azInputs[i].value); let dist = Number(distInputs[i].value); if (azInputs[i].value === "" || distInputs[i].value === "") continue;
-      cx = cx + dist * Math.sin(az * (2 * Math.PI / MILS_CIRCLE)); cy = cy + dist * Math.cos(az * (2 * Math.PI / MILS_CIRCLE));
-      html += getCompactSaveUI(`qname_f5_${i+1}`, `経由点${i+1}`, cx, cy);
+    let cx = parseCoord(document.getElementById('f5_ax').value); 
+    let cy = parseCoord(document.getElementById('f5_ay').value); 
+    let cz = parseZ(document.getElementById('f5_az').value);
+    
+    let baseAzStr = document.getElementById('f5_base_az').value;
+    if(cx === null || cy === null || baseAzStr === "") {
+       alert("出発点Aと基準方位角(A→B)を正しく入力してください"); return; 
     }
-    document.getElementById('res5').innerHTML = html; document.getElementById('res5').classList.remove('hidden'); 
+    let baseAz = Number(baseAzStr);
+    
+    let angInputs = document.querySelectorAll('.r_ang'); 
+    let distInputs = document.querySelectorAll('.r_dist');
+    let elvInputs = document.querySelectorAll('.r_elv');
+    
+    let html = `<div class="color-palette-container"><span>一括マップ表示色</span><div class="color-palette" id="f5_color_palette"></div><input type="hidden" id="f5_color" value="${lastColor}"></div>`;
+    html += getCompactSaveUI('qname_f5_A', '出発点A', cx, cy, cz);
+    
+    let currentAz = baseAz;
+    
+    for (let i = 0; i < angInputs.length; i++) {
+      let angStr = angInputs[i].value; 
+      let distStr = distInputs[i].value; 
+      let elvStr = elvInputs[i].value;
+      if (angStr === "" || distStr === "") continue;
+      
+      let ang = Number(angStr); 
+      let dist = Number(distStr); 
+      let elv = parseZ(elvStr);
+      
+      if (i === 0) {
+        currentAz = (baseAz + ang) % MILS_CIRCLE;
+      } else {
+        currentAz = (currentAz + 3200 + ang) % MILS_CIRCLE;
+      }
+      
+      cx = cx + dist * Math.sin(currentAz * (2 * Math.PI / MILS_CIRCLE)); 
+      cy = cy + dist * Math.cos(currentAz * (2 * Math.PI / MILS_CIRCLE));
+      
+      if (cz !== null && elv !== null) {
+         cz = cz + dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE));
+      } else {
+         cz = null; // 標高または垂直角が途切れたら以降の標高は計算不能
+      }
+      
+      let label = String.fromCharCode(67 + i); 
+      html += getCompactSaveUI(`qname_f5_${label}`, `未知点${label}`, cx, cy, cz);
+    }
+    document.getElementById('res5').innerHTML = html; 
+    document.getElementById('res5').classList.remove('hidden'); 
     renderColorPalette('f5_color_palette', 'f5_color'); syncColorPickers();
   }
 
@@ -740,7 +840,7 @@
     if (savedPoints.length === 0) { alert("書き出すデータがありません。"); return; }
     let out = savedPoints.map(p => {
       let kanjiColor = getClosestKanjiColor(p.color);
-      return `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.z !== null && p.z !== undefined ? Math.round(p.z) : '-'} ${kanjiColor}`;
+      return `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.z !== null && p.z !== undefined ? Math.round(p.z * 10)/10 : '-'} ${kanjiColor}`;
     }).join('\n');
     document.getElementById('io_text').value = out;
   }
@@ -786,7 +886,7 @@
   function updateSavedList() {
     let html = ""; if (savedPoints.length === 0) html = "<p style='text-align:center; color:#888;'>登録データがありません</p>";
     savedPoints.forEach((p) => {
-      let pColor = p.color || '#ff3b30'; let zStr = p.z !== null && p.z !== undefined ? ` / H: ${Math.round(p.z)}m` : "";
+      let pColor = p.color || '#ff3b30'; let zStr = p.z !== null && p.z !== undefined ? ` / H: ${Math.round(p.z * 10)/10}m` : "";
       html += `<div class="list-item" data-id="${p.id}"><div class="drag-handle">≡</div>
                  <div class="content"><strong><span style="display:inline-block; width:12px; height:12px; background:${pColor}; border-radius:50%; margin-right:5px; vertical-align:middle;"></span>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}${zStr}</div>
                  <div class="action-btns"><button class="btn-gray" onclick="editPoint(${p.id})">編集</button><button class="btn-red" onclick="deletePoint(${p.id})">削除</button></div></div>`;
@@ -860,8 +960,8 @@
     let sId = document.getElementById('map_start').value; let eId = document.getElementById('map_end').value; if (!sId || !eId) return;
     currentP1 = savedPoints.find(p => p.id == sId); currentP2 = savedPoints.find(p => p.id == eId);
     let r = calcData(currentP1.e, currentP1.n, currentP1.z, currentP2.e, currentP2.n, currentP2.z);
-    let elvText = r.elvMil !== null ? `<br>高低差: ${r.dz > 0 ? '+' : ''}${Math.round(r.dz)} m<br>高低角: ${r.elvMil > 0 ? '+' : ''}${Math.round(r.elvMil)} mil` : "";
-    let res = document.getElementById('resMap'); res.innerHTML = `【${currentP1.name} → ${currentP2.name}】<br>方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist)} m${elvText}`;
+    let elvText = r.elvMil !== null ? `<br>高低差: ${r.dz > 0 ? '+' : ''}${Math.round(r.dz * 10)/10} m<br>垂直角: ${r.elvMil > 0 ? '+' : ''}${Math.round(r.elvMil)} mil` : "";
+    let res = document.getElementById('resMap'); res.innerHTML = `【${currentP1.name} → ${currentP2.name}】<br>方位角: ${pad4(r.mil)}<br>距離: ${Math.round(r.dist * 10)/10} m${elvText}`;
     res.classList.remove('hidden'); drawMap(currentP1, currentP2, false);
   }
 
