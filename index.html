@@ -167,7 +167,7 @@
   <div id="func3" class="view hidden">
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
-        <h3 style="margin:0;">観測点-A</h3>
+        <h3 style="margin:0;">観測点1</h3>
         <button class="btn-gps" onclick="getGPS('f3_p1x', 'f3_p1y')">📍GPS取得</button>
       </div>
       <div class="input-group">
@@ -179,7 +179,7 @@
     </div>
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
-        <h3 style="margin:0;">観測点-B</h3>
+        <h3 style="margin:0;">観測点2</h3>
         <button class="btn-gps" onclick="getGPS('f3_p2x', 'f3_p2y')">📍GPS取得</button>
       </div>
       <div class="input-group">
@@ -197,24 +197,24 @@
     <div class="card">
       <p style="font-size:14px; color:var(--text-color); margin-top:0; opacity: 0.8;">未知の現在地から、既知の2点へ方位角を測定し、現在地を求めます。</p>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0;">既知点-A</h3>
+        <h3 style="margin:0;">既知点1</h3>
       </div>
       <div class="input-group">
         <select id="f4_sel1" onchange="loadPointToInputs('f4_sel1', 'f4_p1x', 'f4_p1y')"></select>
         <input type="text" inputmode="decimal" id="f4_p1x" placeholder="E座標">
         <input type="text" inputmode="decimal" id="f4_p1y" placeholder="N座標">
-        <input type="number" step="any" id="f4_az1" placeholder="Aへの測定方位角 (mil)">
+        <input type="number" step="any" id="f4_az1" placeholder="既知点1への測定方位角 (mil)">
       </div>
     </div>
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0;">既知点-B</h3>
+        <h3 style="margin:0;">既知点2</h3>
       </div>
       <div class="input-group">
         <select id="f4_sel2" onchange="loadPointToInputs('f4_sel2', 'f4_p2x', 'f4_p2y')"></select>
         <input type="text" inputmode="decimal" id="f4_p2x" placeholder="E座標">
         <input type="text" inputmode="decimal" id="f4_p2y" placeholder="N座標">
-        <input type="number" step="any" id="f4_az2" placeholder="Bへの測定方位角 (mil)">
+        <input type="number" step="any" id="f4_az2" placeholder="既知点2への測定方位角 (mil)">
       </div>
     </div>
     <button onclick="calcF4()">計算実行</button>
@@ -226,7 +226,7 @@
       <p style="font-size:14px; color:var(--text-color); margin-top:0; opacity: 0.8; margin-bottom:15px;">出発点(器械点)と後視点(基準)から、連続して右回り夾角と距離を観測します。</p>
       
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
-        <h3 style="margin:0; color:#007aff;">出発点 A (器械点1)</h3>
+        <h3 style="margin:0; color:#007aff;">出発点 (最初の器械点)</h3>
         <button class="btn-gps" onclick="getGPS('f5_ax', 'f5_ay', 'f5_az')">📍GPS取得</button>
       </div>
       <div class="input-group">
@@ -236,27 +236,26 @@
         <input type="number" step="any" id="f5_az" placeholder="標高(m) ※任意">
       </div>
 
-      <h3 style="margin-top:20px; color:#ff9500;">後視点 B (方向基準)</h3>
-      <p style="font-size:12px; margin-top:0; opacity: 0.8;">B点の座標を入れるか、A→Bの方位角を直接入力してください。</p>
+      <h3 style="margin-top:20px; color:#ff9500;">後視点 (方向基準)</h3>
+      <p style="font-size:12px; margin-top:0; opacity: 0.8;">後視点の座標を入れるか、基準方位角を直接入力してください。</p>
       <div class="input-group">
         <select id="f5_sel_b" onchange="loadPointToInputs('f5_sel_b', 'f5_bx', 'f5_by'); calcTraverseBaseAz();"></select>
         <div style="display:flex; gap:10px;">
-          <input type="text" inputmode="decimal" id="f5_bx" placeholder="B点 E座標" onchange="calcTraverseBaseAz()">
-          <input type="text" inputmode="decimal" id="f5_by" placeholder="B点 N座標" onchange="calcTraverseBaseAz()">
+          <input type="text" inputmode="decimal" id="f5_bx" placeholder="後視点 E座標" onchange="calcTraverseBaseAz()">
+          <input type="text" inputmode="decimal" id="f5_by" placeholder="後視点 N座標" onchange="calcTraverseBaseAz()">
         </div>
-        <input type="number" step="any" id="f5_base_az" placeholder="A→B 基準方位角 (mil) (必須)" style="font-weight:bold; background-color:var(--result-bg); color:var(--result-text); border:1px solid #007aff;">
+        <input type="number" step="any" id="f5_base_az" placeholder="基準方位角 (mil) (必須)" style="font-weight:bold; background-color:var(--result-bg); color:var(--result-text); border:1px solid #007aff;">
       </div>
 
       <h3 style="margin-top:20px;">観測リスト (右回り)</h3>
       <p style="font-size:12px; margin-top:0; opacity: 0.8; line-height:1.4;">
-        ※1回目はBを「0」としてCを観測。<br>
-        ※2回目はAを「0(後視)」としてDを観測。<br>
-        以降、直前の点を後視点として右回りで入力。
+        ※1回目は後視点を「0」として最初の観測点を観測。<br>
+        ※2回目以降は直前の点を後視点として右回りで入力。
       </p>
       
       <div id="routeList">
         <div class="route-row">
-          <span style="font-size:15px; font-weight:bold; width:20px; text-align:center;">C</span>
+          <span style="font-size:15px; font-weight:bold; width:20px; text-align:center;">1</span>
           <input type="number" step="any" class="r_ang" placeholder="角度mil">
           <input type="number" step="any" class="r_dist" placeholder="距離m">
           <input type="number" step="any" class="r_elv" placeholder="垂直角mil">
@@ -298,7 +297,7 @@
       </div>
 
       <div class="input-group">
-        <input type="text" id="f6_name" placeholder="名称 (例: 観測所A)">
+        <input type="text" id="f6_name" placeholder="名称 (例: 観測所1)">
         <input type="text" inputmode="decimal" id="f6_x" placeholder="E座標 (必須)">
         <input type="text" inputmode="decimal" id="f6_y" placeholder="N座標 (必須)">
         <input type="number" step="any" id="f6_z" placeholder="標高(m) ※任意">
@@ -738,7 +737,7 @@
   function updateTraverseLabels() {
     let rows = document.getElementById('routeList').querySelectorAll('.route-row');
     rows.forEach((row, i) => {
-        row.querySelector('span').innerText = String.fromCharCode(67 + i); 
+        row.querySelector('span').innerText = String(i + 1); 
     });
   }
 
@@ -763,7 +762,7 @@
     
     let baseAzStr = document.getElementById('f5_base_az').value;
     if(cx === null || cy === null || baseAzStr === "") {
-       alert("出発点Aと基準方位角(A→B)を正しく入力してください"); return; 
+       alert("出発点と基準方位角を正しく入力してください"); return; 
     }
     let baseAz = Number(baseAzStr);
     
@@ -772,7 +771,7 @@
     let elvInputs = document.querySelectorAll('.r_elv');
     
     let html = `<div class="color-palette-container"><span>一括マップ表示色</span><div class="color-palette" id="f5_color_palette"></div><input type="hidden" id="f5_color" value="${lastColor}"></div>`;
-    html += getCompactSaveUI('qname_f5_A', '出発点A', cx, cy, cz);
+    html += getCompactSaveUI('qname_f5_start', '出発点', cx, cy, cz);
     
     let currentAz = baseAz;
     
@@ -798,11 +797,11 @@
       if (cz !== null && elv !== null) {
          cz = cz + dist * Math.tan(elv * (2 * Math.PI / MILS_CIRCLE));
       } else {
-         cz = null; // 標高または垂直角が途切れたら以降の標高は計算不能
+         cz = null; 
       }
       
-      let label = String.fromCharCode(67 + i); 
-      html += getCompactSaveUI(`qname_f5_${label}`, `未知点${label}`, cx, cy, cz);
+      let label = String(i + 1); 
+      html += getCompactSaveUI(`qname_f5_pt${label}`, `観測点${label}`, cx, cy, cz);
     }
     document.getElementById('res5').innerHTML = html; 
     document.getElementById('res5').classList.remove('hidden'); 
