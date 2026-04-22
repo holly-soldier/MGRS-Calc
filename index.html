@@ -354,7 +354,11 @@
       <div class="map-container">
         <canvas id="mapCanvas" width="400" height="400"></canvas>
       </div>
-      <button class="btn-gray btn-small" onclick="resetMapView()" style="margin-top:10px;">視点をリセット</button>
+      
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button id="btn_map_gps" class="btn-gps btn-small" onclick="showCurrentLocOnMap()" style="flex:1; margin:0; padding:10px; width:auto; border-radius:5px;">📍現在地を表示</button>
+        <button class="btn-gray btn-small" onclick="resetMapView()" style="flex:1; margin:0; padding:10px; width:auto; border-radius:5px;">視点をリセット</button>
+      </div>
       
       <h3 style="margin-top: 20px;">登録座標から諸元計算</h3>
       <div class="input-group">
@@ -408,6 +412,9 @@
   let lastColor = localStorage.getItem('mgrsLastColor') || '#ff3b30';
   let isNightMode = localStorage.getItem('tacticalMode') === 'true';
   let editingId = null; 
+  
+  // ★ マップ用の現在地保存変数
+  let mapCurrentLoc = null;
 
   let mapOverlay = JSON.parse(localStorage.getItem('mgrsMapOverlay') || 'null');
   let mapImageObj = new Image();
@@ -952,6 +959,24 @@
     }
   }
 
+  // ★ マップ現在地取得機能
+  function showCurrentLocOnMap() {
+    if (!navigator.geolocation) { alert("GPSがサポートされていません"); return; }
+    let btn = document.getElementById('btn_map_gps');
+    let originalText = btn.innerText;
+    btn.innerText = "取得中...";
+    
+    navigator.geolocation.getCurrentPosition(pos => {
+      let mgrs = getMGRSfromLatLon(pos.coords.latitude, pos.coords.longitude);
+      mapCurrentLoc = { e: mgrs.e, n: mgrs.n };
+      btn.innerText = originalText;
+      resetMapView(); // 取得後にマップの視点を現在地が含まれるようにリセット
+    }, err => { 
+      alert("GPS取得失敗: " + err.message); 
+      btn.innerText = originalText;
+    }, { enableHighAccuracy: true });
+  }
+
   let mapState = { x: 0, y: 0, scale: 1, baseScale: 1, refE: 0, refN: 0, minDx: 0, maxDx: 0, minDy: 0, maxDy: 0, padding: 30 };
   let currentP1 = null; let currentP2 = null;
 
@@ -985,6 +1010,9 @@
     if (mapOverlay) {
       pointsToBound.push({e: mapOverlay.tl_e, n: mapOverlay.tl_n});
       pointsToBound.push({e: mapOverlay.br_e, n: mapOverlay.br_n});
+    }
+    if (mapCurrentLoc) {
+      pointsToBound.push(mapCurrentLoc);
     }
 
     if (pointsToBound.length === 0) { 
@@ -1128,6 +1156,29 @@
         ctx.fillStyle = cMainText; ctx.fillText(p.name, x + 10, y + 4);
       }
     });
+
+    // ★ マップ現在地の描画 (最前面)
+    if (mapCurrentLoc) {
+      let x = getX(mapCurrentLoc.e), y = getY(mapCurrentLoc.n);
+      if(x > -20 && x < w + 20 && y > -20 && y < h + 20) {
+        let locColor = isNightMode ? '#ff9500' : '#007aff';
+        let locHalo = isNightMode ? 'rgba(255, 149, 0, 0.3)' : 'rgba(0, 122, 255, 0.3)';
+        
+        // 波紋エフェクト風
+        ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI*2); 
+        ctx.fillStyle = locHalo; ctx.fill();
+        
+        // 中心点
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); 
+        ctx.fillStyle = locColor; ctx.fill();
+        ctx.strokeStyle = cBg; ctx.lineWidth = 2; ctx.stroke(); 
+        
+        // テキスト
+        ctx.font = "bold 12px sans-serif"; 
+        ctx.lineWidth = 3; ctx.strokeStyle = cTextHalo; ctx.strokeText("現在地", x + 12, y + 4);
+        ctx.fillStyle = locColor; ctx.fillText("現在地", x + 12, y + 4);
+      }
+    }
   }
 
   const canvas = document.getElementById('mapCanvas'); let isDragging = false; let startPan = { x: 0, y: 0 }; let initialPinchDist = null;
