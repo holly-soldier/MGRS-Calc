@@ -546,7 +546,6 @@
     return parts.join('.');
   };
 
-  // 小数点2位表示を維持しつつ、整数部を4桁ゼロ埋めする専用関数
   const formatMil = (num) => {
     if (num === null || num === undefined || isNaN(num)) return "";
     let parts = Number(num).toFixed(2).split('.');
@@ -894,10 +893,11 @@
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList();
   }
 
+  // ★ 変更点： N座標の後のスラッシュ削除 & 標高(H)を改行表示
   function updateSavedList() {
     let html = ""; if (savedPoints.length === 0) html = "<p style='text-align:center; color:#888;'>登録データがありません</p>";
     savedPoints.forEach((p) => {
-      let pColor = p.color || '#ff3b30'; let zStr = p.z !== null && p.z !== undefined ? ` / H: ${p.z.toFixed(2)}m` : "";
+      let pColor = p.color || '#ff3b30'; let zStr = p.z !== null && p.z !== undefined ? `<br>H: ${p.z.toFixed(2)}m` : "";
       html += `<div class="list-item" data-id="${p.id}"><div class="drag-handle">≡</div>
                  <div class="content"><strong><span style="display:inline-block; width:12px; height:12px; background:${pColor}; border-radius:50%; margin-right:5px; vertical-align:middle;"></span>${p.name}</strong><br>E: ${pad5(p.e)} / N: ${pad5(p.n)}${zStr}</div>
                  <div class="action-btns"><button class="btn-gray" onclick="editPoint(${p.id})">編集</button><button class="btn-red" onclick="deletePoint(${p.id})">削除</button></div></div>`;
