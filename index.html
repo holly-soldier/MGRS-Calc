@@ -109,7 +109,10 @@
 <body>
 
 <header>
-  <span>MGRS Calc</span>
+  <span style="display: flex; align-items: baseline; gap: 8px;">
+    M-SCORE
+    <span style="font-size: 12px; font-weight: normal; opacity: 0.8;">(v26.04.23)</span>
+  </span>
   <button onclick="toggleNightMode()" style="width:auto; padding:5px 10px; margin:0; background:rgba(0,0,0,0.2); border:1px solid var(--header-text); color:var(--header-text); font-size:14px; border-radius:5px;">🌙 暗視</button>
 </header>
 
@@ -893,7 +896,6 @@
     localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList();
   }
 
-  // ★ 変更点： N座標の後のスラッシュ削除 & 標高(H)を改行表示
   function updateSavedList() {
     let html = ""; if (savedPoints.length === 0) html = "<p style='text-align:center; color:#888;'>登録データがありません</p>";
     savedPoints.forEach((p) => {
