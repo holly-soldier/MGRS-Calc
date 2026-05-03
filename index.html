@@ -107,7 +107,19 @@
   </style>
 </head>
 <body>
-
+  <!-- === インストール促進ポップアップ === -->
+<div id="install_popup" class="hidden" style="position: fixed; bottom: 85px; left: 15px; right: 15px; background: var(--card-bg); border: 2px solid #007aff; border-radius: 10px; padding: 15px; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: opacity 0.3s;">
+  <h4 style="margin-top: 0; margin-bottom: 10px; color: #007aff; font-size: 16px;">📱 アプリとして追加</h4>
+  <p style="font-size: 13px; margin-top: 0; margin-bottom: 15px; line-height: 1.5; color: var(--text-color);">
+    ホーム画面に追加すると、オフライン環境でも素早く起動できるようになります。<br><br>
+    <strong>【iPhoneの場合】</strong><br>ブラウザ下部の「共有ボタン（四角から矢印が上に出ているアイコン）」から「ホーム画面に追加」を選択してください。<br><br>
+    <strong>【Androidの場合】</strong><br>下の「インストール」ボタンを押すか、メニューから追加してください。
+  </p>
+  <div style="display: flex; gap: 10px;">
+    <button id="install_btn" class="btn-green" style="margin-bottom: 0; display: none; flex: 1;" onclick="installApp()">インストール</button>
+    <button class="btn-gray" style="margin-bottom: 0; flex: 1;" onclick="dismissInstall()">閉じる</button>
+  </div>
+</div>
 <header>
   <span style="display: flex; align-items: baseline; gap: 8px;">
     MGRS-calc
@@ -1206,6 +1218,43 @@
     else { switchView('func1'); }
     if(currentSelect) currentSelect.style.display = 'none';
   });
+    // === PWAインストール促進ポップアップの制御 ===
+  let deferredPrompt;
+  const installPopup = document.getElementById('install_popup');
+  const installBtn = document.getElementById('install_btn');
+
+  // Android Chrome等で自動インストールプロンプトが発火した場合
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // デフォルトのミニバーを非表示
+    deferredPrompt = e; // イベントを保持
+    installBtn.style.display = 'block'; // インストールボタンを表示
+  });
+  // すでにアプリとして開いているか（Standaloneモード）の判定
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  // 過去に「閉じる」を押したかどうかの判定
+  const isDismissed = localStorage.getItem('installPromptDismissed') === 'true';
+
+  // ブラウザで開いていて、かつ過去に閉じていなければポップアップを表示
+  if (!isStandalone && !isDismissed) {
+    setTimeout(() => {
+      installPopup.classList.remove('hidden');
+    }, 1500); // 起動して1.5秒後にフワッと出す（即出しは操作の邪魔になるため）
+  }
+
+  function dismissInstall() {
+    installPopup.classList.add('hidden');
+    localStorage.setItem('installPromptDismissed', 'true'); // 閉じたことを記憶
+  }
+
+  function installApp() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt(); // ネイティブのインストールダイアログを表示
+      deferredPrompt.userChoice.then((choiceResult) => {
+        deferredPrompt = null;
+        dismissInstall(); // 選択が終わったらポップアップを消す
+      });
+    }
+  }
 </script>
 </body>
 </html>
