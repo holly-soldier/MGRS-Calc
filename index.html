@@ -107,23 +107,11 @@
   </style>
 </head>
 <body>
-  <!-- === インストール促進ポップアップ === -->
-<div id="install_popup" class="hidden" style="position: fixed; bottom: 85px; left: 15px; right: 15px; background: var(--card-bg); border: 2px solid #007aff; border-radius: 10px; padding: 15px; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: opacity 0.3s;">
-  <h4 style="margin-top: 0; margin-bottom: 10px; color: #007aff; font-size: 16px;">📱 アプリとして追加</h4>
-  <p style="font-size: 13px; margin-top: 0; margin-bottom: 15px; line-height: 1.5; color: var(--text-color);">
-    ホーム画面に追加すると、オフライン環境でも素早く起動できるようになります。<br><br>
-    <strong>【iPhoneの場合】</strong><br>ブラウザ下部の「共有ボタン（四角から矢印が上に出ているアイコン）」から「ホーム画面に追加」を選択してください。<br><br>
-    <strong>【Androidの場合】</strong><br>下の「インストール」ボタンを押すか、メニューから追加してください。
-  </p>
-  <div style="display: flex; gap: 10px;">
-    <button id="install_btn" class="btn-green" style="margin-bottom: 0; display: none; flex: 1;" onclick="installApp()">インストール</button>
-    <button class="btn-gray" style="margin-bottom: 0; flex: 1;" onclick="dismissInstall()">閉じる</button>
-  </div>
-</div>
+
 <header>
   <span style="display: flex; align-items: baseline; gap: 8px;">
-    MGRS-calc
-    <span style="font-size: 12px; font-weight: normal; opacity: 0.8;">(v26.05.03)</span>
+    MGRS Calc
+    <span style="font-size: 12px; font-weight: normal; opacity: 0.8;">(v26.05.18)</span>
   </span>
   <button onclick="toggleNightMode()" style="width:auto; padding:5px 10px; margin:0; background:rgba(0,0,0,0.2); border:1px solid var(--header-text); color:var(--header-text); font-size:14px; border-radius:5px;">🌙 暗視</button>
 </header>
@@ -232,6 +220,9 @@
         <input type="text" inputmode="decimal" id="f4_az2" placeholder="既知点2への測定方位角 (mil)">
       </div>
     </div>
+    <div class="card bg-warning text-dark hidden" id="recession_warning" style="margin-top: 15px; font-size:14px; padding:10px; border-radius:5px; background:#fff3cd; color:#856404; border:1px solid #ffeeba;">
+      ⚠️ <strong>危険円（不確定）の警告:</strong> 2つの既知点と未知の現在地が「一直線上」または「同一円周上」に近い配置である可能性があります。この配置では後方交会法の幾何学的な誤差が極めて大きくなり、正確な現在地を算出できません。別の既知点を選ぶか、3点目を用いた交会法を推奨します。
+    </div>
     <button onclick="calcF4()">計算実行</button>
     <div id="res4" class="result hidden"></div>
   </div>
@@ -290,8 +281,11 @@
         <button class="btn-gray btn-small" onclick="toggleBatchIO()" style="margin:0; width:auto; padding:6px 10px;">📁 データ共有</button>
       </div>
       <div id="batch_io_area" class="hidden" style="background:var(--bg-color); padding:12px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border-color);">
-        <p style="font-size:12px; margin-top:0; opacity:0.8;">【書式】名称 E座標 N座標 標高(任意) 色<br>例: T1 00700.5 04245.2 150 赤</p>
-        <textarea id="io_text" placeholder="ここにテキストを貼り付けて読み込むか、下のボタンで現在のデータを書き出します。"></textarea>
+        <p style="font-size:12px; margin-top:0; opacity:0.8; line-height: 1.4;">
+          【書式】色指定行を挟んで複数の座標データを並べます。<br>
+          赤<br>名称 E座標 N座標 標高(任意)<br>緑<br>名称 E座標 N座標 標高
+        </p>
+        <textarea id="io_text" placeholder="【記述例】&#10;赤&#10;第1 観測所 00700.5 04245.2 150&#10;目標 A 00850 04100&#10;緑&#10;基準点2 00600 04300"></textarea>
         <div style="display:flex; gap:10px;">
           <button class="btn-green btn-small" onclick="importPoints()" style="margin:0; flex:1;">↓ 読込</button>
           <button class="btn-gray btn-small" onclick="exportPoints()" style="margin:0; flex:1;">↑ 書出</button>
@@ -520,24 +514,12 @@
     if (m.startsWith('#') && (m.length === 4 || m.length === 7)) return m; return lastColor;
   }
 
-  function toggleNightMode() {
-    isNightMode = !isNightMode;
-    if (isNightMode) document.body.classList.add('tactical-night');
-    else document.body.classList.remove('tactical-night');
-    localStorage.setItem('tacticalMode', isNightMode);
-    drawMap(currentP1, currentP2, false); 
-  }
-
-  function toggleMapSettings() {
-    let el = document.getElementById('map_settings_area');
-    if(el.classList.contains('hidden')) { el.classList.remove('hidden'); } 
-    else { el.classList.add('hidden'); }
-  }
-
-  function toggleBatchIO() {
-    let el = document.getElementById('batch_io_area');
-    if(el.classList.contains('hidden')) { el.classList.remove('hidden'); } 
-    else { el.classList.add('hidden'); }
+  // ★ 単体の色指定行であるかを識別する判定処理
+  function isColorLine(str) {
+    let s = str.trim().toLowerCase();
+    const validColors = ['赤','青','緑','黄','黒','白','紫','橙','茶','灰','水','桃',
+                         'red','blue','green','yellow','black','white','purple','orange','brown','gray','cyan','pink'];
+    return validColors.includes(s) || s.startsWith('#');
   }
 
   const parseCoord = (val) => {
@@ -727,11 +709,40 @@
   function calcF4() {
     let p1x = parseCoord(document.getElementById('f4_p1x').value); let p1y = parseCoord(document.getElementById('f4_p1y').value); let az1 = Number(document.getElementById('f4_az1').value);
     let p2x = parseCoord(document.getElementById('f4_p2x').value); let p2y = parseCoord(document.getElementById('f4_p2y').value); let az2 = Number(document.getElementById('f4_az2').value);
+    
+    const warningEl = document.getElementById('recession_warning');
+    if(warningEl) warningEl.classList.add('hidden');
+    
     if(p1x===null || p2x===null) return;
-    let tan1 = Math.tan(Math.PI/2 - (((az1 + 3200) % 6400) * (2 * Math.PI / MILS_CIRCLE))); let tan2 = Math.tan(Math.PI/2 - (((az2 + 3200) % 6400) * (2 * Math.PI / MILS_CIRCLE)));
+    
+    let a1 = ((az1 + 3200) % 6400) * (2 * Math.PI / MILS_CIRCLE);
+    let a2 = ((az2 + 3200) % 6400) * (2 * Math.PI / MILS_CIRCLE);
+    let tan1 = Math.tan(Math.PI/2 - a1); 
+    let tan2 = Math.tan(Math.PI/2 - a2); 
     let res = document.getElementById('res4');
-    if (Math.abs(tan1 - tan2) < 0.0001) res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
-    else { let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); let intY = tan1 * (intX - p1x) + p1y; res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY); }
+    
+    if (Math.abs(tan1 - tan2) < 0.0001) {
+      res.innerHTML = '<span style="color:red">交点なし (平行等)</span>';
+    } else {
+      let intX = (tan1 * p1x - tan2 * p2x + p2y - p1y) / (tan1 - tan2); 
+      let intY = tan1 * (intX - p1x) + p1y; 
+      
+      let baseRad = Math.atan2(p2x - p1x, p2y - p1y);
+      let diff1 = Math.abs(a1 - baseRad);
+      let diff2 = Math.abs(a2 - baseRad);
+      while(diff1 > Math.PI) diff1 -= Math.PI*2; diff1 = Math.abs(diff1);
+      while(diff2 > Math.PI) diff2 -= Math.PI*2; diff2 = Math.abs(diff2);
+      
+      let angleBetweenLines = Math.abs(a1 - a2);
+      while(angleBetweenLines > Math.PI) angleBetweenLines -= Math.PI*2;
+      angleBetweenLines = Math.abs(angleBetweenLines);
+      
+      if (diff1 < 0.05 || diff2 < 0.05 || angleBetweenLines < 0.05 || Math.abs(angleBetweenLines - Math.PI) < 0.05) {
+        if(warningEl) warningEl.classList.remove('hidden');
+      }
+      
+      res.innerHTML = `現在地座標<br>E: ${pad5(intX)}  N: ${pad5(intY)}` + getSaveUI('qname_f4', intX, intY); 
+    }
     res.classList.remove('hidden'); 
     renderColorPalette('qname_f4_color_palette', 'qname_f4_color'); syncColorPickers();
   }
@@ -834,21 +845,57 @@
     renderColorPalette('f5_color_palette', 'f5_color'); syncColorPickers();
   }
 
+  // ★ 改良されたインポート機能（一括色グループ＆空白名後方パース対応）
   function importPoints() {
     let text = document.getElementById('io_text').value; if (!text.trim()) { alert("テキストを入力してください"); return; }
     let lines = text.split('\n'); let addedCount = 0; let updatedCount = 0;
+    let currentImportColor = lastColor; // 指定がない場合の初期色は選択色
+    
     for (let line of lines) {
-       let parts = line.trim().split(/[\s\t]+/);
+       let ln = line.trim();
+       if (!ln) continue;
+       
+       // 1. 色指定行の判定
+       if (isColorLine(ln)) {
+          currentImportColor = parseColorStr(ln);
+          continue;
+       }
+       
+       // 2. 座標行の解析（右側末尾からブロックを特定する後方パース）
+       let parts = ln.split(/[\s\t]+/);
        if (parts.length >= 3) {
-          let name = parts[0]; let e = parseCoord(parts[1]); let n = parseCoord(parts[2]);
-          if (e !== null && n !== null) {
-             let z = null, color = lastColor;
-             if (parts.length === 4) { if (!isNaN(parts[3]) || parts[3] === '-') { z = parseZ(parts[3]); } else { color = parseColorStr(parts[3]); } } 
-             else if (parts.length >= 5) { z = parseZ(parts[3]); color = parseColorStr(parts[4]); }
-             
+          let idx = parts.length - 1;
+          let eVal = null, nVal = null, zVal = null;
+          let name = "";
+          
+          // 後ろ3要素の構造を判定
+          let lastIsZ = (!isNaN(parts[idx]) || parts[idx] === '-');
+          let nextIsN = !isNaN(parts[idx-1]);
+          let next2IsE = !isNaN(parts[idx-2]);
+          
+          if (lastIsZ && nextIsN && next2IsE && parts.length >= 4) {
+             // 標高を含んでいるパターン
+             zVal = parseZ(parts[idx]);
+             nVal = parseCoord(parts[idx-1]);
+             eVal = parseCoord(parts[idx-2]);
+             name = parts.slice(0, idx-2).join(" "); // 残った左側をすべて結合してスペース混じりの名前とする
+          } else if (!isNaN(parts[idx]) && !isNaN(parts[idx-1])) {
+             // 標高を省略しているパターン
+             zVal = null;
+             nVal = parseCoord(parts[idx]);
+             eVal = parseCoord(parts[idx-1]);
+             name = parts.slice(0, idx-1).join(" ");
+          } else {
+             continue; // パース不可能な行はスキップ
+          }
+          
+          if (eVal !== null && nVal !== null && name !== "") {
              let existing = savedPoints.find(p => p.name === name);
-             if (existing) { existing.e = e; existing.n = n; existing.z = z; existing.color = color; updatedCount++; } 
-             else { savedPoints.push({ id: Date.now() + Math.floor(Math.random()*1000), name: name, e: e, n: n, z: z, color: color }); addedCount++; }
+             if (existing) { 
+                existing.e = eVal; existing.n = nVal; existing.z = zVal; existing.color = currentImportColor; updatedCount++; 
+             } else { 
+                savedPoints.push({ id: Date.now() + Math.floor(Math.random()*1000), name: name, e: eVal, n: nVal, z: zVal, color: currentImportColor }); addedCount++; 
+             }
           }
        }
     }
@@ -857,17 +904,51 @@
       alert(`${addedCount}件を追加、${updatedCount}件を上書きしました！`); 
       document.getElementById('io_text').value = ""; toggleBatchIO(); 
     } else { 
-      alert("読み込める座標がありませんでした。\n【書式】名称 E N 標高(任意) 色"); 
+      alert("読み込める座標がありませんでした。\n【記述方法】\n赤\n第1 観測所 00700 04245 150"); 
     }
   }
 
+  // ★ 改良されたエクスポート機能（一括色指定ヘッダー付きで出力）
   function exportPoints() {
     if (savedPoints.length === 0) { alert("書き出すデータがありません。"); return; }
-    let out = savedPoints.map(p => {
-      let kanjiColor = getClosestKanjiColor(p.color);
-      return `${p.name} ${pad5(p.e)} ${pad5(p.n)} ${p.z !== null && p.z !== undefined ? p.z.toFixed(2) : '-'} ${kanjiColor}`;
-    }).join('\n');
-    document.getElementById('io_text').value = out;
+    
+    // パレットの各色に対応するグループの初期化
+    let groups = {};
+    COLOR_PALETTE.forEach(c => { groups[c.hex] = []; });
+    
+    savedPoints.forEach(p => {
+      let closestHex = COLOR_PALETTE[0].hex;
+      let directMatch = COLOR_PALETTE.find(c => c.hex.toLowerCase() === p.color.toLowerCase());
+      if (directMatch) {
+        closestHex = directMatch.hex;
+      } else {
+        let targetRgb = hexToRgb(p.color);
+        if (targetRgb) {
+          let minDistance = Infinity;
+          for (let color of COLOR_PALETTE) {
+            let rgb = hexToRgb(color.hex);
+            if (!rgb) continue;
+            let dist = Math.pow(targetRgb.r - rgb.r, 2) + Math.pow(targetRgb.g - rgb.g, 2) + Math.pow(targetRgb.b - rgb.b, 2);
+            if (dist < minDistance) { minDistance = dist; closestHex = color.hex; }
+          }
+        }
+      }
+      if (groups[closestHex]) groups[closestHex].push(p);
+      else groups[COLOR_PALETTE[0].hex].push(p);
+    });
+    
+    let outLines = [];
+    COLOR_PALETTE.forEach(c => {
+      let pts = groups[c.hex];
+      if (pts && pts.length > 0) {
+        outLines.push(c.name); // 色の見出し行を出力
+        pts.forEach(p => {
+          let zDisp = p.z !== null && p.z !== undefined ? p.z.toFixed(2) : '-';
+          outLines.push(`${p.name} ${pad5(p.e)} ${pad5(p.n)} ${zDisp}`);
+        });
+      }
+    });
+    document.getElementById('io_text').value = outLines.join('\n');
   }
   
   function deleteAllPoints() { if (savedPoints.length === 0) return; if (confirm("本当にすべて削除しますか？")) { savedPoints = []; localStorage.setItem('mgrsPoints', JSON.stringify(savedPoints)); updateSavedList(); updateAllDropdowns(); drawMap(null, null, true); alert("削除しました。"); } }
@@ -1218,43 +1299,6 @@
     else { switchView('func1'); }
     if(currentSelect) currentSelect.style.display = 'none';
   });
-    // === PWAインストール促進ポップアップの制御 ===
-  let deferredPrompt;
-  const installPopup = document.getElementById('install_popup');
-  const installBtn = document.getElementById('install_btn');
-
-  // Android Chrome等で自動インストールプロンプトが発火した場合
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); // デフォルトのミニバーを非表示
-    deferredPrompt = e; // イベントを保持
-    installBtn.style.display = 'block'; // インストールボタンを表示
-  });
-  // すでにアプリとして開いているか（Standaloneモード）の判定
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  // 過去に「閉じる」を押したかどうかの判定
-  const isDismissed = localStorage.getItem('installPromptDismissed') === 'true';
-
-  // ブラウザで開いていて、かつ過去に閉じていなければポップアップを表示
-  if (!isStandalone && !isDismissed) {
-    setTimeout(() => {
-      installPopup.classList.remove('hidden');
-    }, 1500); // 起動して1.5秒後にフワッと出す（即出しは操作の邪魔になるため）
-  }
-
-  function dismissInstall() {
-    installPopup.classList.add('hidden');
-    localStorage.setItem('installPromptDismissed', 'true'); // 閉じたことを記憶
-  }
-
-  function installApp() {
-    if (deferredPrompt) {
-      deferredPrompt.prompt(); // ネイティブのインストールダイアログを表示
-      deferredPrompt.userChoice.then((choiceResult) => {
-        deferredPrompt = null;
-        dismissInstall(); // 選択が終わったらポップアップを消す
-      });
-    }
-  }
 </script>
 </body>
 </html>
